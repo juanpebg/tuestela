@@ -1,2 +1,2 @@
-# tuestela
-TuEstela: descubre tu estela digital. Ciberseguridad por y para las personas. 
+# tuEstela
+tuEstela: descubre tu estela digital. Ciberseguridad por y para las personas. 
