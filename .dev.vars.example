@@ -1,0 +1,16 @@
+# Variables de la función /api/waitlist para desarrollo local.
+# Copia este archivo como `.dev.vars` (está en .gitignore: NUNCA se sube)
+# y rellena los valores reales. En producción se configuran cifradas en el
+# panel de Cloudflare Pages (Settings → Environment variables).
+
+# Panel de Resend → API Keys → Create API Key → Permission: "Full access"
+# (la función da de alta contactos en la audiencia; una clave de "solo envío"
+# no puede hacerlo)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+
+# Panel de Resend → Audiences → (crea una) → copia su ID
+RESEND_AUDIENCE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+# Remitente del email de bienvenida. El dominio debe estar verificado en
+# Resend (Domains → Add Domain).
+RESEND_FROM="tuEstela <hola@tudominio.com>"
