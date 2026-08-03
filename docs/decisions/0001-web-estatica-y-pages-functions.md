@@ -5,7 +5,7 @@
 
 ## Contexto
 
-La primera versión de estela.digital es una landing de "próximamente": una página
+La primera versión de tuEstela es una landing de "próximamente": una página
 narrativa con animaciones y un único formulario (la lista de espera). No hay
 usuarios, ni sesiones, ni contenido que cambie por visitante. La web se despliega en
 Cloudflare Pages y el código es público.
