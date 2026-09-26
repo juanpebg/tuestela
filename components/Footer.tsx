@@ -1,6 +1,7 @@
 import { REPO_URL } from "@/lib/site";
+import { BrandSignature } from "@/components/Brand";
 
-// La despedida de la página: el wordmark firma y dos enlaces discretos
+// La despedida de la página: personaje y nombre firman; dos enlaces discretos
 // prueban lo que la web promete. Componente de servidor: cero JS.
 const LINKS = [
   { href: REPO_URL, label: "Hecho en abierto — GitHub" },
@@ -11,9 +12,9 @@ export default function Footer() {
   return (
     <footer className="px-6 pb-10">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 border-t border-ink/10 pt-8 text-sm sm:flex-row sm:justify-between">
-        <p className="font-serif text-lg font-semibold">
-          tu<span className="text-brand">Estela</span>
-        </p>
+        <a href="#inicio" aria-label="tuEstela — volver al inicio" className="rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
+          <BrandSignature />
+        </a>
         <nav
           aria-label="Enlaces del proyecto"
           className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-ink/60"

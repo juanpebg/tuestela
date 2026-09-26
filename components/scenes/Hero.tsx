@@ -25,7 +25,7 @@ const DIGITAL_LETTERS = ["d", "i", "g", "i", "t", "a", "l"];
 
 export default function Hero() {
   return (
-    <section className="night-dawn relative flex min-h-svh flex-col overflow-hidden">
+    <section id="inicio" className="night-dawn relative flex min-h-svh flex-col overflow-hidden">
       {/* La noche: estrellas, nebulosas y grano. Scrollea con la escena —
           el espacio se queda aquí, no persigue al visitante. */}
       <NightSky />

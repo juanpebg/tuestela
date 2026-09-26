@@ -5,8 +5,8 @@
 @theme {
   --color-cream: #fdf6e9; /* fondo: crema cálido */
   --color-ink: #1e1b4b; /* texto: índigo casi negro */
-  --color-brand: #4338ca; /* azul eléctrico de marca */
-  --color-gold: #d4a94e; /* dorado: la estela */
+  --color-brand: #3f2bab; /* violeta azulado del símbolo provisional */
+  --color-gold: #f2a52b; /* ámbar del nombre y la estrella del logo */
   --color-pencil: #d9442c; /* rojo lápiz: el subrayado */
   --color-violet: #7c3aed; /* violeta: extremo final del degradado de la estela */
   --color-violet-light: #a78bfa; /* violeta claro: la estela sobre cielo nocturno */

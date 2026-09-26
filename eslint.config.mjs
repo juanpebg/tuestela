@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Código temporal generado por la vista previa de Cloudflare.
+    ".wrangler/**",
     "next-env.d.ts",
   ]),
 ]);

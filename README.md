@@ -84,6 +84,13 @@ Cloudflare Pages conectado a este repositorio:
    `/api/waitlist`; el archivo [public/_headers](public/_headers) aplica las
    cabeceras de seguridad ([ADR 0005](docs/decisions/0005-cabeceras-de-seguridad-y-csp.md)).
 
+## Marca provisional
+
+Los originales y su procedencia están en [assets/brand/](assets/brand/README.md).
+Las copias web se sirven desde nuestro dominio y se pueden regenerar con
+`node scripts/prepare-brand.mjs`. La integración se explica en el
+[ADR 0011](docs/decisions/0011-tipografia-original-y-simbolo-en-iconos.md).
+
 ## Licencia
 
 [MIT](LICENSE). Úsalo, apréndelo, copia lo que te sirva.
