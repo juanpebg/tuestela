@@ -26,6 +26,9 @@ entendemos lo suficiente como para tomarla.**
 | [0003](0003-el-navegador-no-habla-con-terceros.md) | El navegador del visitante no habla con terceros | Aceptada |
 | [0004](0004-emails-en-resend-audiences.md) | Los emails de la lista de espera viven en Resend Audiences | Aceptada |
 | [0005](0005-cabeceras-de-seguridad-y-csp.md) | Cabeceras de seguridad, y el compromiso de la CSP | Aceptada |
+| [0006](0006-actualizacion-de-seguridad-septiembre-2026.md) | Actualizar las dependencias antes de conectar el dominio | Aceptada |
+| [0007](0007-altas-seguras-ante-repeticiones-y-fallos.md) | Altas seguras ante repeticiones y fallos | Aceptada |
+| [0008](0008-publicar-la-landing-con-altas-en-pausa.md) | Publicar la landing con las altas en pausa | Aceptada |
 
 ¿Ves un fallo en alguna decisión? Ábrenos un issue. Que nos corrijan en público es
 parte del plan.

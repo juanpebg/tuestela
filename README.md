@@ -8,6 +8,12 @@ conozcas qué se sabe de ti en internet. Esto es la landing de "próximamente":
 una página narrativa con lista de espera, construida en público desde el primer
 commit.
 
+Las altas están temporalmente pausadas: la landing muestra «Próximamente» y
+`POST /api/waitlist` devuelve 503 sin contactar con Resend. La decisión compartida
+vive en `lib/waitlist.ts`; no activar hasta completar privacidad, baja y
+configuración de correo. El dominio previsto para esta versión es
+`https://tuestela.es`; se conserva el modo noindex.
+
 ## Transparencia radical
 
 Este proyecto se explica a sí mismo:
@@ -36,17 +42,22 @@ Resend.
 Necesitas Node.js 20.9 o superior.
 
 ```bash
-npm install
+npm ci
 npm run dev        # solo la web, con recarga en caliente → http://localhost:3000
 ```
+
+Verificación: `npm run lint`, `npm test` y `npm run build`. Las pruebas usan
+respuestas simuladas y nunca crean contactos ni envían correos reales.
 
 Para probar también la función de la lista de espera (build de producción +
 runtime real de Cloudflare):
 
 ```bash
-cp .dev.vars.example .dev.vars   # y rellena tus claves de Resend
+cp .dev.vars.example .dev.vars   # solo al probar las altas una vez habilitadas
 npm run preview                  # → http://localhost:8788
 ```
+
+Con las altas pausadas, `npm run preview` no necesita credenciales.
 
 ## Variables de entorno
 

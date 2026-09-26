@@ -2,6 +2,7 @@ import Estela from "@/components/Estela";
 import NightSky from "@/components/NightSky";
 import Sparkle from "@/components/Sparkle";
 import { REPO_URL } from "@/lib/site";
+import { WAITLIST_ENABLED } from "@/lib/waitlist";
 
 // Coreografía secuencial. Al cargar, SOLO el cielo; luego cada pieza espera
 // a que la anterior termine. Botones y trazo entran juntos como final
@@ -93,7 +94,7 @@ export default function Hero() {
             href="#waitlist"
             className="rounded-full bg-gold px-7 py-3 font-medium text-[#0b0920] transition-colors hover:bg-[#e8cd8b] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
           >
-            Únete a la lista
+            {WAITLIST_ENABLED ? "Únete a la lista" : "Conoce lo que viene"}
           </a>
           <a
             href={REPO_URL}

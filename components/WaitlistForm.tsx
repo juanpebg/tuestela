@@ -65,8 +65,9 @@ export default function WaitlistForm() {
         {/* Copy honesto: a quien repite alta no le reenviamos la bienvenida,
             así que no prometemos un correo que puede no llegar. */}
         <p className="rounded-lg bg-brand/10 px-6 py-4 text-lg">
-          ¡Hecho! Estás en la lista. Si es tu primera vez, te llegará una
-          bienvenida en unos minutos.
+          ¡Hecho! Hemos recibido tu solicitud. Si ya estabas en la lista,
+          no recibirás otra bienvenida. Si te habías dado de baja, respetamos
+          tu decisión.
         </p>
         <MicroEstela className="h-6 w-44" />
         <p className="text-sm text-ink/60">Tu estela empieza aquí.</p>

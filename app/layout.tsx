@@ -15,8 +15,8 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  // Al estrenar dominio propio, cambiar aquí la URL base.
-  metadataBase: new URL("https://tuestela.pages.dev"),
+  // Dominio de la landing; el acceso por pages.dev se conserva en Cloudflare.
+  metadataBase: new URL("https://tuestela.es"),
   // MODO SIGILOSO — QUITAR AL LANZAR: accesible por enlace, invisible para
   // buscadores (junto con X-Robots-Tag en public/_headers).
   robots: { index: false, follow: false },

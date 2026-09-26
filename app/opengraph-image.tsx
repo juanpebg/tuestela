@@ -110,7 +110,7 @@ export default async function Image() {
             color: "rgba(30, 27, 75, 0.65)",
           }}
         >
-          tuestela.pages.dev
+          tuestela.es
         </div>
       </div>
     ),
