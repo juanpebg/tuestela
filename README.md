@@ -1,9 +1,8 @@
 # tuEstela
 
-**Descubre tu Estela digital.** Ciberseguridad por y para las personas: sin
-tecnicismos, sin jerga y sin alarmas.
+**Descubre tu Estela digital.**
 
-Queremos construir el mayor buscador de código abierto del planeta para que
+Estamos construyendo el mayor buscador de código abierto del planeta para que
 conozcas qué se sabe de ti en internet. Esto es la landing de "próximamente":
 una página narrativa con lista de espera, construida en público desde el primer
 commit.
@@ -25,6 +24,23 @@ Este proyecto se explica a sí mismo:
   nos comprometemos a hacer con ella.
 - ¿Ves algo mal hecho? Ábrenos un issue. Que nos corrijan en público es parte
   del plan.
+
+### Última revisión de la landing · 1 de octubre de 2026
+
+Una revisión externa de diseño nos ayudó a detectar dos problemas: la portada
+necesitaba explicar mejor el proyecto y el fondo de la demo saltaba al aparecer
+los resultados. Centramos la portada, redujimos el titular, igualamos los botones
+y reservamos el espacio de la demo para mantener estable el fondo.
+
+La portada presenta ahora lo que estamos construyendo; el texto de la demo
+explica qué información queremos ayudar a encontrar. Eliminamos una coletilla
+genérica y conservamos la identidad visual y la animación.
+
+El diagnóstico, las alternativas y las comprobaciones están en el
+[ADR 0013](docs/decisions/0013-portada-centrada-y-demo-sin-saltos.md).
+La evolución y los textos definitivos se recogen en el
+[ADR 0014](docs/decisions/0014-mensaje-de-portada-y-contexto-de-la-demo.md).
+La demo sigue usando ejemplos fijos: todavía no realiza búsquedas reales.
 
 ## Arquitectura en una frase
 

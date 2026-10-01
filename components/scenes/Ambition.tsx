@@ -74,12 +74,12 @@ export default function Ambition() {
         viewport={{ once: true, amount: 0.5 }}
         transition={{ duration: 0.9, ease: "easeOut" }}
       >
-        Queremos construir el{" "}
+        Tu información está repartida por internet: en perfiles, fotos o listados
+        que quizá ni recuerdas. Queremos ayudarte a{" "}
         {/* El mismo degradado que viste "Estela" en el hero: rima visual. */}
         <span className="bg-gradient-to-r from-[#eacd8e] via-gold to-violet-light bg-clip-text font-semibold text-transparent">
-          mayor buscador de código abierto
-        </span>{" "}
-        del planeta para que conozcas qué se sabe de ti en internet.
+          encontrarla en un solo lugar.
+        </span>
       </motion.p>
 
       {/* El buscador, ilustrado: teclea, escanea y encuentra. */}

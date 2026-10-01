@@ -35,6 +35,10 @@ export default function SearchDemo() {
   const [shown, setShown] = useState(RESULTS.length);
   const [scanning, setScanning] = useState(false);
 
+  // Mostrar el estado final también si la preferencia cambia a mitad de la demo.
+  const visibleResults = reduceMotion ? RESULTS.length : shown;
+  const visibleQuery = reduceMotion ? QUERY : QUERY.slice(0, typed);
+
   // Al montar con JS (y sin movimiento reducido): rebobinar al principio.
   // El setState síncrono es deliberado — es el patrón de React para divergir
   // del HTML del servidor tras hidratar (el SSR enseña el estado final; el
@@ -84,27 +88,38 @@ export default function SearchDemo() {
       {/* Fila de búsqueda */}
       <div className="flex items-center gap-3 border-b border-cream/10 pb-3">
         <MagnifierIcon />
-        <span className="font-sans text-sm text-cream/90">
-          {QUERY.slice(0, typed)}
-          <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-[3px] bg-gold motion-safe:animate-caret" />
+        <span className="grid font-sans text-sm leading-6 text-cream/90">
+          {/* Reserva el tamaño de la pregunta completa durante el tecleo. */}
+          <span className="invisible [grid-area:1/1]">{QUERY}</span>
+          <span className="[grid-area:1/1]">
+            {visibleQuery}
+            <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-[3px] bg-gold motion-safe:animate-caret" />
+          </span>
         </span>
       </div>
 
-      {/* Escaneo */}
-      {scanning && (
-        <div className="mt-4 h-[2px] overflow-hidden rounded-full bg-cream/10">
+      {/* La guía ocupa siempre el mismo espacio, también cuando está oculta. */}
+      <div
+        className="mt-4 h-[2px] overflow-hidden rounded-full bg-cream/10"
+        style={{ opacity: scanning && !reduceMotion ? 1 : 0 }}
+      >
+        {scanning && !reduceMotion && (
           <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-gold to-violet-light motion-safe:animate-scan" />
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Resultados */}
+      {/* Todas las filas conservan su altura natural: solo animamos opacidad
+          y desplazamiento, sin estirar la sección ni su degradado (ADR 0013). */}
       <ul className="mt-3 space-y-2">
-        {RESULTS.slice(0, shown).map(({ label, color }) => (
+        {RESULTS.map(({ label, color }, index) => (
           <motion.li
             key={label}
-            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            initial={false}
+            animate={{
+              opacity: index < visibleResults ? 1 : 0,
+              y: index < visibleResults ? 0 : 8,
+            }}
+            transition={{ duration: reduceMotion ? 0 : 0.4, ease: "easeOut" }}
             className="flex items-center gap-3 rounded-lg bg-cream/[0.04] px-3 py-2 text-sm text-cream/85"
           >
             <span
@@ -116,16 +131,17 @@ export default function SearchDemo() {
         ))}
       </ul>
 
-      {shown === RESULTS.length && (
-        <motion.p
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-4 text-xs leading-relaxed text-cream/50"
-        >
-          Esto es lo que internet cuenta de ti. Pronto podrás verlo — y decidir.
-        </motion.p>
-      )}
+      <motion.p
+        initial={false}
+        animate={{ opacity: visibleResults === RESULTS.length ? 1 : 0 }}
+        transition={{
+          duration: reduceMotion ? 0 : 0.6,
+          delay: !reduceMotion && visibleResults === RESULTS.length ? 0.3 : 0,
+        }}
+        className="mt-4 text-xs leading-relaxed text-cream/50"
+      >
+        Esto es lo que internet cuenta de ti. Pronto podrás verlo — y decidir.
+      </motion.p>
     </div>
   );
 }
