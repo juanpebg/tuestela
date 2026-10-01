@@ -33,6 +33,8 @@ entendemos lo suficiente como para tomarla.**
 | [0010](0010-identidad-tipografica-sin-repetir-logos.md) | Llevar el carácter del logo a la tipografía de la web | Sustituida por 0011 |
 | [0011](0011-tipografia-original-y-simbolo-en-iconos.md) | Recuperar la tipografía original y usar el símbolo en los iconos | Aceptada; favicon complementado por 0012 |
 | [0012](0012-favicon-transparente.md) | Favicon transparente | Aceptada |
+| [0013](0013-portada-centrada-y-demo-sin-saltos.md) | Portada centrada y demo sin saltos de altura | Aceptada |
+| [0014](0014-mensaje-de-portada-y-contexto-de-la-demo.md) | Mensaje de portada y contexto de la demo | Aceptada; complementa 0013 |
 
 ¿Ves un fallo en alguna decisión? Ábrenos un issue. Que nos corrijan en público es
 parte del plan.

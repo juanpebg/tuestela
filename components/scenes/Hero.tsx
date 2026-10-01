@@ -32,9 +32,9 @@ export default function Hero() {
       {/* La estela cruza el cielo por detrás del contenido. */}
       <Estela className="absolute inset-0 h-full w-full" />
 
-      {/* pb en svh: empuja el bloque sobre el centro y deja aire abajo,
-          invitando a scrollear sin decirlo. */}
-      <div className="relative flex flex-1 flex-col items-center justify-center px-6 pb-[30svh]">
+      {/* Márgenes simétricos: el conjunto queda centrado y el indicador de
+          scroll conserva su espacio incluso en pantallas bajas. */}
+      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-28 md:py-32">
         <h1 className="relative text-center text-cream">
           <span className="sr-only">Descubre tu Estela digital</span>
 
@@ -44,13 +44,13 @@ export default function Hero() {
             <span className="absolute left-1/2 top-1/2 h-[200%] w-[150%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(212,169,78,0.12),transparent_70%)]" />
 
             <span
-              className="relative block font-sans text-sm font-medium uppercase tracking-[0.4em] text-cream/70 motion-safe:animate-reveal md:text-lg"
+              className="relative block font-sans text-xs font-medium uppercase tracking-[0.35em] text-cream/70 motion-safe:animate-reveal md:text-sm"
               style={{ animationDelay: `${EYEBROW_DELAY}ms` }}
             >
               Descubre tu
             </span>
 
-            <span className="relative mt-3 block font-serif text-5xl font-semibold leading-none tracking-tight md:mt-5 md:text-8xl lg:text-9xl">
+            <span className="relative mt-3 block font-serif text-[clamp(2.75rem,7.5vw,6rem)] font-semibold leading-[1.05] tracking-tight md:mt-5">
               {/* La palabra vestida con el degradado de su propio trazo. */}
               <span
                 className="inline-block bg-gradient-to-r from-[#eacd8e] via-gold to-violet-light bg-clip-text text-transparent motion-safe:animate-bloom"
@@ -85,14 +85,22 @@ export default function Hero() {
           </span>
         </h1>
 
+        <p
+          className="relative mt-6 max-w-lg text-center text-base leading-relaxed text-pretty text-cream/80 motion-safe:animate-reveal md:mt-8 md:text-lg"
+          style={{ animationDelay: "5400ms" }}
+        >
+          Estamos construyendo el mayor buscador de código abierto del planeta
+          para que conozcas qué se sabe de ti en internet.
+        </p>
+
         {/* Funcionales, no decorativos: fuera del bloque aria-hidden. */}
         <div
-          className="mt-12 flex flex-wrap items-center justify-center gap-4 motion-safe:animate-reveal md:mt-16"
+          className="mt-8 grid w-full max-w-[26rem] grid-cols-1 gap-3 motion-safe:animate-reveal sm:grid-cols-2 sm:gap-4 md:mt-10"
           style={{ animationDelay: `${CTA_DELAY}ms` }}
         >
           <a
             href="#waitlist"
-            className="rounded-full bg-gold px-7 py-3 font-medium text-[#0b0920] transition-colors hover:bg-[#e8cd8b] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
+            className="flex min-h-12 items-center justify-center rounded-full border border-transparent bg-gold px-6 py-3 text-center font-medium text-[#0b0920] transition-colors hover:bg-[#e8cd8b] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
           >
             {WAITLIST_ENABLED ? "Únete a la lista" : "Conoce lo que viene"}
           </a>
@@ -100,7 +108,7 @@ export default function Hero() {
             href={REPO_URL}
             target="_blank"
             rel="noopener"
-            className="flex items-center gap-2 rounded-full border border-cream/25 px-6 py-3 font-medium text-cream/90 transition-colors hover:border-cream/50 hover:bg-cream/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
+            className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-cream/25 bg-[#0b0920]/50 px-6 py-3 text-center font-medium text-cream/90 transition-colors hover:border-cream/50 hover:bg-[#0b0920]/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
           >
             <GitHubIcon />
             GitHub
