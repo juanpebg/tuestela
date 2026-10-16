@@ -7,6 +7,9 @@ export const INTRO = [
 ] as const;
 
 export const ASK_CONSENT = "¿Seguimos? Solo si el correo es tuyo.";
+export const PRIVACY_LEAD = "Si quieres el detalle, está en la";
+export const PRIVACY_LINK = "política de privacidad";
+export const PRIVACY_HREF = "/privacidad";
 
 export const MORE = [
   "La fuente principal es Have I Been Pwned. Nuestro servidor les enseña el correo, porque lo necesitan para buscarlo, y luego yo te explico la respuesta.",

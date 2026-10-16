@@ -15,6 +15,9 @@ import {
   moreLeft,
   ONLINE,
   PLAN_LEAD,
+  PRIVACY_HREF,
+  PRIVACY_LEAD,
+  PRIVACY_LINK,
   QUESTIONS,
   RESTART,
   SEARCHING,
@@ -112,7 +115,7 @@ export default function BreachCheck() {
     const token = { cancel: false };
     const born = life.current;
 
-    async function say(text: string) {
+    async function say(text: string, extra?: Partial<ChatMessage>) {
       if (token.cancel || life.current !== born) return;
       setTyping(true);
       setHeader(TYPING);
@@ -120,7 +123,8 @@ export default function BreachCheck() {
       if (token.cancel || life.current !== born) return;
       setTyping(false);
       setHeader(ONLINE);
-      push(stamp("estela", { text }), text);
+      const spoken = extra?.privacy ? `${text} ${PRIVACY_LEAD} ${PRIVACY_LINK}.` : text;
+      push(stamp("estela", { text, ...extra }), spoken);
       await pause(260);
     }
 
@@ -132,7 +136,7 @@ export default function BreachCheck() {
       );
       await say(INTRO[1]);
       await say(INTRO[2]);
-      await say(ASK_CONSENT);
+      await say(ASK_CONSENT, { privacy: true });
       if (token.cancel || life.current !== born) return;
       setTyping(false);
       setHeader(ONLINE);
@@ -430,7 +434,10 @@ export default function BreachCheck() {
     ) : null;
 
   return (
-    <div className="mt-8 w-full overflow-hidden rounded-[1.75rem] border border-ink/10 bg-white/75 text-left shadow-[0_18px_50px_rgba(30,27,75,0.08)]">
+    <div
+      id="estela-chat"
+      className="mt-8 w-full overflow-hidden rounded-[1.75rem] border border-ink/10 bg-white/75 text-left shadow-[0_18px_50px_rgba(30,27,75,0.08)]"
+    >
       <header className="flex items-center gap-3 border-b border-ink/10 bg-cream/80 px-4 py-3">
         <Image
           src="/brand/symbol.webp"
@@ -443,7 +450,7 @@ export default function BreachCheck() {
         <div className="min-w-0">
           <p className="font-serif text-lg font-semibold leading-none">Estela</p>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-ink/60">
-            <span className="size-1.5 rounded-full bg-gold" aria-hidden="true" />
+            <span className="size-2 shrink-0 rounded-full bg-online" aria-hidden="true" />
             {typing || phase === "checking" ? header : ONLINE}
           </p>
         </div>
@@ -537,7 +544,25 @@ function Bubble({ message }: { message: ChatMessage }) {
           : "max-w-[85%] rounded-2xl rounded-bl-md border border-ink/10 bg-white px-3.5 py-2 text-ink motion-safe:animate-rise"
       }
     >
-      <p className="text-pretty text-[0.95rem] leading-snug">{message.text}</p>
+      <p className="text-pretty text-[0.95rem] leading-snug">
+        {message.text}
+        {message.privacy && (
+          <>
+            {" "}
+            {PRIVACY_LEAD}{" "}
+            <a
+              href={PRIVACY_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-brand underline decoration-2 underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              {PRIVACY_LINK}
+              <span className="sr-only"> (se abre en una pestaña nueva)</span>
+            </a>
+            .
+          </>
+        )}
+      </p>
       <p className={`mt-1 flex items-center justify-end text-[11px] ${mine ? "text-cream/60" : "text-ink/40"}`}>
         {message.at}
         {mine && <Ticks />}

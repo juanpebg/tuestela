@@ -38,4 +38,5 @@ export type ChatMessage = {
   at: string;
   text?: string;
   card?: GuidedBreach;
+  privacy?: boolean;
 };

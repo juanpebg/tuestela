@@ -11,6 +11,8 @@ const FILES = [
   "../lib/guide.ts",
   "../lib/breaches.ts",
   "../functions/api/check.ts",
+  "../app/privacidad/page.tsx",
+  "../components/Footer.tsx",
 ];
 
 const BANNED = /\b(corto|cortos|breve|breves|rápido|rápida|rápidos|rápidas|rápidamente)\b/i;
@@ -24,4 +26,15 @@ test("los textos visibles no dicen corto, breve ni rápido", async () => {
       .join("\n");
     assert.equal(BANNED.test(visible), false, relative);
   }
+});
+
+test("el permiso enlaza la política sin salir de la conversación", async () => {
+  const chat = await readFile(new URL("../components/BreachCheck.tsx", import.meta.url), "utf8");
+  assert.match(chat, /href=\{PRIVACY_HREF\}/);
+  assert.match(chat, /target="_blank"/);
+  assert.match(chat, /privacy: true/);
+  const page = await readFile(new URL("../app/privacidad/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /Have I Been Pwned/);
+  assert.match(page, /No lo guardamos/);
+  assert.match(page, /solo el correo/i);
 });

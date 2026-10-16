@@ -1,4 +1,5 @@
 import BreachCheck from "@/components/BreachCheck";
+import { PRIVACY_HREF } from "@/components/check/copy";
 import Sparkle from "@/components/Sparkle";
 
 // Primera pieza real del buscador: un correo, una consulta, ninguna copia
@@ -58,7 +59,18 @@ export default function Comprobar() {
               <input id="check-consent" name="consent" type="checkbox" value="yes" required className="checkbox-estela mt-0.5" />
               <span>Solo compruebo mi propio correo.</span>
             </label>
-            <p className="consent-hint text-sm text-ink/55">Para comprobar, confirma que el correo es tuyo.</p>
+            <p className="consent-hint text-sm text-ink/55">
+              Para comprobar, confirma que el correo es tuyo.{" "}
+              <a
+                href={PRIVACY_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-brand underline decoration-2 underline-offset-2"
+              >
+                Política de privacidad
+              </a>
+              .
+            </p>
             <button id="check-submit" type="submit" className="w-fit rounded-full bg-gold px-7 py-3 font-medium text-[#0b0920]">
               Comprobar
             </button>

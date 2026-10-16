@@ -34,7 +34,8 @@ Cloudflare Pages) más **dos funciones con servidor**:
 - [functions/api/check.ts](functions/api/check.ts) consulta si un correo aparece
   en filtraciones. La fuente principal es Have I Been Pwned; otras fuentes
   públicas entran por `lib/providers` y, si se consultan, se nombran en la
-  tarjeta. No guarda el correo. El navegador no habla con ellos ni ve la clave
+  tarjeta. No guarda el correo. La conversación enlaza
+  [`/privacidad`](app/privacidad/page.tsx). El navegador no habla con ellos ni ve la clave
   ([ADR 0013](docs/decisions/0013-consulta-de-filtraciones-sin-guardar-el-correo.md),
   [ADR 0014](docs/decisions/0014-resultados-con-estela-y-varias-fuentes.md),
   [ADR 0015](docs/decisions/0015-conversacion-con-estela.md)).

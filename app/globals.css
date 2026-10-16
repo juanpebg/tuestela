@@ -7,6 +7,9 @@
   --color-ink: #1e1b4b; /* texto: índigo casi negro */
   --color-brand: #3f2bab; /* violeta azulado del símbolo provisional */
   --color-gold: #f2a52b; /* ámbar del nombre y la estrella del logo */
+  /* Presencia en el chat. #22c55e queda por debajo de 3:1 sobre el crema;
+     #15803d se lee como verde de mensajería y pasa el contraste. */
+  --color-online: #15803d;
   --color-pencil: #d9442c; /* rojo lápiz: el subrayado */
   --color-violet: #7c3aed; /* violeta: extremo final del degradado de la estela */
   --color-violet-light: #a78bfa; /* violeta claro: la estela sobre cielo nocturno */
