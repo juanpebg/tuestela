@@ -44,17 +44,7 @@
     }
   }
 
-  /* Cursor de texto de la demo del buscador. */
-  --animate-caret: caret 1.1s steps(2) infinite;
-
-  @keyframes caret {
-    50% {
-      opacity: 0;
-    }
-  }
-
-  /* Barra de escaneo de la demo del buscador: un segmento de estela barre
-     la guía de lado a lado. */
+  /* Barra de espera de la consulta: un segmento de estela barre la guía. */
   --animate-scan: scan 0.9s ease-in-out infinite;
 
   @keyframes scan {

@@ -22,11 +22,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   title: "tuEstela — Descubre tu Estela digital",
   description:
-    "Ciberseguridad familiar sin tecnicismos, sin jerga y sin alarmas. Próximamente.",
+    "Comprueba si tu correo aparece en filtraciones conocidas. Ciberseguridad familiar, sin tecnicismos y sin alarmas.",
   openGraph: {
     title: "tuEstela — Descubre tu Estela digital",
     description:
-      "Ciberseguridad familiar sin tecnicismos, sin jerga y sin alarmas. Próximamente.",
+      "Comprueba si tu correo aparece en filtraciones conocidas. Ciberseguridad familiar, sin tecnicismos y sin alarmas.",
     siteName: "tuEstela",
     locale: "es_ES",
     type: "website",

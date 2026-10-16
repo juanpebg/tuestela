@@ -1,4 +1,5 @@
-// POST /api/waitlist — la única pieza con servidor de toda la web.
+// POST /api/waitlist — alta en la lista de espera.
+// La otra función con servidor es /api/check (ADR 0013).
 // Cloudflare Pages convierte este archivo en endpoint por su posición:
 // functions/api/waitlist.ts → /api/waitlist. Exportar onRequestPost lo
 // limita al método POST.

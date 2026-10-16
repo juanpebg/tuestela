@@ -7,6 +7,7 @@ import { WAITLIST_ENABLED } from "@/lib/waitlist";
 // Coreografía secuencial. Al cargar, SOLO el cielo; luego cada pieza espera
 // a que la anterior termine. Botones y trazo entran juntos como final
 // (CTA_DELAY aquí ≡ DRAW_DELAY en Estela.tsx — mantener en sintonía).
+// El botón principal lleva al comprobador (#comprobar).
 //
 // IMPORTANTE: los retardos van SIEMPRE como estilo inline, nunca como clase
 // [animation-delay:...]: el atajo `animation:` de animate-reveal se genera
@@ -91,11 +92,19 @@ export default function Hero() {
           style={{ animationDelay: `${CTA_DELAY}ms` }}
         >
           <a
-            href="#waitlist"
+            href="#comprobar"
             className="rounded-full bg-gold px-7 py-3 font-medium text-[#0b0920] transition-colors hover:bg-[#e8cd8b] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
           >
-            {WAITLIST_ENABLED ? "Únete a la lista" : "Conoce lo que viene"}
+            Comprueba tu correo
           </a>
+          {WAITLIST_ENABLED && (
+            <a
+              href="#waitlist"
+              className="rounded-full border border-cream/25 px-6 py-3 font-medium text-cream/90 transition-colors hover:border-cream/50 hover:bg-cream/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0920]"
+            >
+              Únete a la lista
+            </a>
+          )}
           <a
             href={REPO_URL}
             target="_blank"

@@ -4,7 +4,7 @@ import path from "node:path";
 
 // La tarjeta comparte tipografía y atmósfera con la web. Se genera en build.
 export const dynamic = "force-static";
-export const alt = "tuEstela — Descubre tu Estela digital. Próximamente en tuestela.es";
+export const alt = "tuEstela — Descubre tu Estela digital. Comprueba tu correo en tuestela.es";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -36,7 +36,7 @@ export default async function Image() {
           <path d="M-20 65 C220 10 355 155 610 98 S955 8 1220 110" stroke="url(#trail)" strokeWidth="5" fill="none" />
         </svg>
         <div style={{ display: "flex", position: "absolute", bottom: 35, left: 60, fontSize: 23, color: "#d5cce7" }}>tuestela.es</div>
-        <div style={{ display: "flex", position: "absolute", bottom: 35, right: 60, fontSize: 23, color: "#d5cce7" }}>Próximamente</div>
+        <div style={{ display: "flex", position: "absolute", bottom: 35, right: 60, fontSize: 23, color: "#d5cce7" }}>Comprueba tu correo</div>
       </div>
     ),
     { ...size, fonts: [{ name: "Source Serif 4", data: sourceSerif, weight: 600, style: "normal" }] },

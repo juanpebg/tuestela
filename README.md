@@ -4,9 +4,9 @@
 tecnicismos, sin jerga y sin alarmas.
 
 Queremos construir el mayor buscador de código abierto del planeta para que
-conozcas qué se sabe de ti en internet. Esto es la landing de "próximamente":
-una página narrativa con lista de espera, construida en público desde el primer
-commit.
+conozcas qué se sabe de ti en internet. Esta es la landing: una página
+narrativa, un comprobador de filtraciones por correo y una lista de espera,
+construida en público desde el primer commit.
 
 Las altas están temporalmente pausadas: la landing muestra «Próximamente» y
 `POST /api/waitlist` devuelve 503 sin contactar con Resend. La decisión compartida
@@ -29,13 +29,18 @@ Este proyecto se explica a sí mismo:
 ## Arquitectura en una frase
 
 Una web 100 % estática (Next.js con `output: 'export'`, servida por el CDN de
-Cloudflare Pages) más **una única función con servidor**
-([functions/api/waitlist.ts](functions/api/waitlist.ts)) que valida el alta en
-la lista de espera, la registra en Resend y envía el email de bienvenida.
-El porqué, en el [ADR 0001](docs/decisions/0001-web-estatica-y-pages-functions.md).
+Cloudflare Pages) más **dos funciones con servidor**:
+
+- [functions/api/check.ts](functions/api/check.ts) consulta si un correo aparece
+  en filtraciones de Have I Been Pwned. No guarda el correo. El navegador no
+  habla con ellos ni ve la clave ([ADR 0013](docs/decisions/0013-consulta-de-filtraciones-sin-guardar-el-correo.md)).
+- [functions/api/waitlist.ts](functions/api/waitlist.ts) valida el alta en la
+  lista de espera, la registra en Resend y envía el email de bienvenida.
+
+El porqué de la web estática, en el [ADR 0001](docs/decisions/0001-web-estatica-y-pages-functions.md).
 
 Stack: Next.js (App Router) · Tailwind CSS v4 · Motion · Cloudflare Pages ·
-Resend.
+Resend · Have I Been Pwned.
 
 ## Desarrollo local
 
@@ -49,15 +54,17 @@ npm run dev        # solo la web, con recarga en caliente → http://localhost:3
 Verificación: `npm run lint`, `npm test` y `npm run build`. Las pruebas usan
 respuestas simuladas y nunca crean contactos ni envían correos reales.
 
-Para probar también la función de la lista de espera (build de producción +
-runtime real de Cloudflare):
+Para probar también las funciones (build de producción + runtime real de
+Cloudflare):
 
 ```bash
-cp .dev.vars.example .dev.vars   # solo al probar las altas una vez habilitadas
+cp .dev.vars.example .dev.vars   # rellena HIBP_API_KEY para el comprobador
 npm run preview                  # → http://localhost:8788
 ```
 
-Con las altas pausadas, `npm run preview` no necesita credenciales.
+`wrangler pages dev` lee `.dev.vars`. Sin `HIBP_API_KEY`, la página carga y
+`POST /api/check` responde que el servidor no está configurado. Con las altas
+pausadas no hace falta ninguna clave de Resend.
 
 ## Variables de entorno
 
@@ -70,8 +77,25 @@ Con las altas pausadas, `npm run preview` no necesita credenciales.
 | `RESEND_API_KEY` | Clave de la API de Resend (permiso *Full access*) | resend.com → API Keys |
 | `RESEND_AUDIENCE_ID` | ID de la audiencia donde se registran las altas | resend.com → Audiences |
 | `RESEND_FROM` | Remitente del email de bienvenida, p. ej. `tuEstela <hola@dominio.com>` | Dominio verificado en resend.com → Domains |
+| `HIBP_API_KEY` | Clave de Have I Been Pwned para `POST /api/check` | haveibeenpwned.com → API key |
 
 Ver [.dev.vars.example](.dev.vars.example) para el detalle de cada una.
+
+### Clave de Have I Been Pwned
+
+La clave no va en el repositorio, ni en el JavaScript de la página, ni en las
+pruebas. Solo en el entorno:
+
+1. **Local.** Copia `.dev.vars.example` a `.dev.vars` y sustituye
+   `HIBP_API_KEY`. Luego `npm run preview` (`wrangler pages dev`), que lee ese
+   archivo. `.dev.vars` está en `.gitignore`.
+2. **Cloudflare Pages.** *Settings → Environment variables*. Crea
+   `HIBP_API_KEY`, márcala cifrada (*Encrypt*) y actívala en **Production** y
+   en **Preview**. Guarda y vuelve a desplegar para que la función la vea.
+
+La suscripción Core 1 permite unas 10 consultas por minuto, compartidas por
+toda la web. La función se queda un poco por debajo y, si HIBP responde 429,
+enseña una espera y respeta el encabezado `retry-after`.
 
 ## Despliegue
 
@@ -79,10 +103,13 @@ Cloudflare Pages conectado a este repositorio:
 
 1. *Workers & Pages → Create → Pages → Connect to Git*.
 2. Build command: `npm run build` · Output directory: `out`.
-3. Variable de entorno `NODE_VERSION` = `22`, más las tres de la tabla.
-4. La carpeta `functions/` se convierte automáticamente en el endpoint
-   `/api/waitlist`; el archivo [public/_headers](public/_headers) aplica las
+3. Variable de entorno `NODE_VERSION` = `22`, más las de la tabla (la de HIBP,
+   cifrada, en Production y en Preview).
+4. La carpeta `functions/` se convierte automáticamente en `/api/waitlist` y
+   `/api/check`. El archivo [public/_headers](public/_headers) aplica las
    cabeceras de seguridad ([ADR 0005](docs/decisions/0005-cabeceras-de-seguridad-y-csp.md)).
+   `connect-src 'self'` ya permite que el navegador llame a nuestras funciones
+   y a ninguna otra.
 
 ## Marca provisional
 

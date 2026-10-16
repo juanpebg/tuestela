@@ -28,6 +28,7 @@ emprenderemos ninguna acción legal contra ti. Gracias por hacer esto mejor.
 
 ## Alcance
 
-- Este repositorio y la web desplegada (incluida la función `/api/waitlist`).
+- Este repositorio y la web desplegada (incluidas las funciones `/api/waitlist`
+  y `/api/check`).
 - Fuera de alcance: vulnerabilidades de las plataformas que usamos (Cloudflare,
-  Resend, GitHub) — repórtalas a sus propios programas.
+  Resend, GitHub, Have I Been Pwned) — repórtalas a sus propios programas.

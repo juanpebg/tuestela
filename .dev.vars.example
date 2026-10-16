@@ -14,3 +14,8 @@ RESEND_AUDIENCE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 # Remitente del email de bienvenida. El dominio debe estar verificado en
 # Resend (Domains → Add Domain).
 RESEND_FROM="tuEstela <hola@tudominio.com>"
+
+# Clave de Have I Been Pwned para POST /api/check. Se crea en
+# haveibeenpwned.com → API key. Pega aquí la tuya: este valor es un marcador,
+# no una clave. En Cloudflare Pages va cifrada (Encrypt), en Production y en Preview.
+HIBP_API_KEY=pega-aqui-la-clave
