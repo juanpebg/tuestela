@@ -206,9 +206,41 @@
   display: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .typing-dot {
+    animation: none;
+    opacity: 0.65;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .typing-dot {
+    animation: typing-dot 1.05s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
   .check-card[open] .check-card-body {
     animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
   }
 }
 

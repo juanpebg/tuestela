@@ -88,7 +88,7 @@ one(
 one(
   "PINs",
   "PIN",
-  "Un PIN —el código corto de una tarjeta, un móvil o una cuenta— quedó expuesto.",
+  "Un PIN —el código de una tarjeta, un móvil o una cuenta— quedó expuesto.",
   "Cámbialo si todavía lo usas, y no lo repitas a la vez en la tarjeta, el móvil y el banco.",
 );
 
@@ -200,7 +200,7 @@ one(
 one(
   "Credit card CVV",
   "Código de seguridad de la tarjeta",
-  "El código corto de detrás de la tarjeta quedó expuesto, junto a otros datos de pago.",
+  "El código de detrás de la tarjeta quedó expuesto, junto a otros datos de pago.",
   "Con el número y ese código se puede comprar por internet. Avisa a tu banco y pide una tarjeta nueva: ese código no se cambia, se sustituye la tarjeta.",
 );
 
@@ -673,7 +673,7 @@ const EMPTY_SUMMARY =
 const EMPTY_DETAIL =
   "Eso no demuestra que no exista nada más sobre ti en internet. Solo que, en esta lista, no hay una filtración verificada con este correo.";
 const FOUND_DETAIL =
-  "Abajo tienes qué se filtró y qué puedes hacer, con calma y por partes.";
+  "Te cuento qué se filtró y qué puedes hacer, con calma y por partes.";
 const DATE_FOOTNOTE =
   "La fecha es orientativa: a menudo la filtración se descubre mucho después.";
 const UNDATED = "Fecha no indicada";

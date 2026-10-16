@@ -41,6 +41,30 @@ export default function Comprobar() {
 
         <BreachCheck />
 
+        <noscript>
+          <form action="/api/check" method="post" className="check-form mt-8 flex w-full flex-col gap-4 text-left">
+            <label htmlFor="check-email" className="text-sm font-medium">
+              Tu correo
+              <input
+                id="check-email"
+                name="email"
+                type="email"
+                required
+                maxLength={254}
+                className="mt-2 w-full border-b-2 border-ink/20 bg-transparent px-1 py-3 text-lg"
+              />
+            </label>
+            <label htmlFor="check-consent" className="flex items-start gap-3 text-sm">
+              <input id="check-consent" name="consent" type="checkbox" value="yes" required className="checkbox-estela mt-0.5" />
+              <span>Solo compruebo mi propio correo.</span>
+            </label>
+            <p className="consent-hint text-sm text-ink/55">Para comprobar, confirma que el correo es tuyo.</p>
+            <button id="check-submit" type="submit" className="w-fit rounded-full bg-gold px-7 py-3 font-medium text-[#0b0920]">
+              Comprobar
+            </button>
+          </form>
+        </noscript>
+
         <p className="mt-8 text-sm text-ink/60">
           <a
             href="https://haveibeenpwned.com"

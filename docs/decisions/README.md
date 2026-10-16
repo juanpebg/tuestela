@@ -35,6 +35,7 @@ entendemos lo suficiente como para tomarla.**
 | [0012](0012-favicon-transparente.md) | Favicon transparente | Aceptada |
 | [0013](0013-consulta-de-filtraciones-sin-guardar-el-correo.md) | Consultar filtraciones sin guardar el correo | Aceptada |
 | [0014](0014-resultados-con-estela-y-varias-fuentes.md) | Resultados con Estela y varias fuentes públicas | Aceptada |
+| [0015](0015-conversacion-con-estela.md) | La comprobación es una conversación con Estela | Aceptada |
 
 ¿Ves un fallo en alguna decisión? Ábrenos un issue. Que nos corrijan en público es
 parte del plan.

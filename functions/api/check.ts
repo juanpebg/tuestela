@@ -203,7 +203,7 @@ function renderView(view: GuidedView): string {
     view.advice.length > 0
       ? `<h2 style="font-size:1.3rem;margin-top:2rem">Si quieres el detalle de cada dato</h2>${advice}`
       : "";
-  return `<p><img src="/brand/symbol.webp" alt="" width="64" height="56"></p><p><strong>Estela.</strong> ${escapeHtml(view.speech)}</p><h1 style="font-size:1.8rem">${escapeHtml(view.summary)}</h1><p>${escapeHtml(view.detail)}</p>${breaches}<h2 style="font-size:1.3rem;margin-top:2rem">Un plan corto</h2><ol>${plan}</ol>${adviceBlock}${view.footnote ? `<p>${escapeHtml(view.footnote)}</p>` : ""}`;
+  return `<p><img src="/brand/symbol.webp" alt="" width="64" height="56"></p><p><strong>Estela.</strong> ${escapeHtml(view.speech)}</p><h1 style="font-size:1.8rem">${escapeHtml(view.summary)}</h1><p>${escapeHtml(view.detail)}</p>${breaches}<h2 style="font-size:1.3rem;margin-top:2rem">Si quieres, yo haría esto</h2><ol>${plan}</ol>${adviceBlock}${view.footnote ? `<p>${escapeHtml(view.footnote)}</p>` : ""}`;
 }
 
 type Payload = { email: string; consent: boolean };

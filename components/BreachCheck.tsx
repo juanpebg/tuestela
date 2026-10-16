@@ -1,39 +1,54 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import CheckResults, { type GuidedView } from "@/components/check/CheckResults";
-import EstelaSays from "@/components/check/EstelaSays";
+import {
+  againLine,
+  ASK_CONSENT,
+  ASK_EMAIL,
+  ASK_HINT,
+  BAD_EMAIL,
+  EMPTY_FOLLOW,
+  estelaForError,
+  INTRO,
+  MORE,
+  moreLeft,
+  ONLINE,
+  PLAN_LEAD,
+  QUESTIONS,
+  RESTART,
+  SEARCHING,
+  SEE_ALL,
+  TELL_MORE,
+  TYPING,
+  YES,
+} from "@/components/check/copy";
+import type { ChatMessage, GuidedBreach, GuidedView } from "@/components/check/types";
 import { EMAIL_MAX_LENGTH, isValidEmail } from "@/lib/validation";
 
-// El navegador solo llama a /api/check. La clave y las fuentes se quedan en
-// el servidor (ADR 0003, ADR 0013 y ADR 0014).
+const PREVIEW_COUNT = 2;
+const SOURCE_HREF: Record<string, string> = {
+  hibp: "https://haveibeenpwned.com",
+  xposedornot: "https://xposedornot.com",
+};
 
-type Status = "idle" | "sending" | "success" | "error";
-type ErrorKind = "plain" | "rate";
+const subscribeMotion = (onChange: () => void) => {
+  const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+};
 
-const subscribe = () => () => {};
-
-function useMounted() {
-  return useSyncExternalStore(subscribe, () => true, () => false);
+function useReducedMotion() {
+  return useSyncExternalStore(
+    subscribeMotion,
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false,
+  );
 }
 
-const STEPS = [
-  {
-    label: "Abro la fuente",
-    source: "Have I Been Pwned",
-    line: "Vamos a verlo juntos. Estoy mirando Have I Been Pwned, la fuente que documenta filtraciones.",
-  },
-  {
-    label: "Reviso si apareces",
-    source: "Have I Been Pwned",
-    line: "Sigo en Have I Been Pwned. Miro si este correo está y qué tipo de datos salieron.",
-  },
-  {
-    label: "Cierro la consulta",
-    source: "Have I Been Pwned",
-    line: "Casi está. No guardo el correo: en cuanto tenga la respuesta, lo olvido.",
-  },
-];
+function clock(): string {
+  return new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+}
 
 function isGuidedView(value: unknown): value is GuidedView {
   if (!value || typeof value !== "object") return false;
@@ -48,92 +63,263 @@ function isGuidedView(value: unknown): value is GuidedView {
   );
 }
 
-function estelaForError(message: string, kind: ErrorKind): string {
-  if (kind === "rate" || message.includes("muchas consultas")) {
-    return "Hay que esperar un momento. No es un fallo tuyo: estamos cuidando el ritmo para no saturar la consulta.";
-  }
-  if (message.includes("no está configurado")) {
-    return "Todavía no puedo mirarlo. Falta configurar el servidor, y prefiero decírtelo a inventar una respuesta.";
-  }
-  if (message.includes("no parece válido")) {
-    return "Revisa el correo con calma: tiene que parecerse a una dirección de verdad.";
-  }
-  if (message.includes("propio correo")) {
-    return "Solo miro un correo si me confirmas que es tuyo.";
-  }
-  return "No he podido mirarlo ahora. No pasa nada: puedes probar otra vez en un momento.";
+function greeting(): ChatMessage {
+  return { id: "hi", role: "estela", text: INTRO[0], at: "" };
 }
 
 export default function BreachCheck() {
-  const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(false);
-  const mounted = useMounted();
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorKind, setErrorKind] = useState<ErrorKind>("plain");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [result, setResult] = useState<GuidedView | null>(null);
-  const [resultId, setResultId] = useState(0);
-  const [step, setStep] = useState(0);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const reducedRef = useRef(reduced);
 
   useEffect(() => {
-    if (status === "success" || status === "error") {
-      resultRef.current?.focus();
-    }
-  }, [status, result, errorMessage]);
+    reducedRef.current = reduced;
+  }, [reduced]);
 
-  useEffect(() => {
-    if (status !== "sending") return;
-    const id = window.setInterval(() => {
-      setStep((current) => (current >= STEPS.length - 1 ? current : current + 1));
-    }, 1100);
-    return () => window.clearInterval(id);
-  }, [status]);
+  const [session, setSession] = useState(0);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [greeting()]);
+  const [phase, setPhase] = useState<"intro" | "consent" | "email" | "checking" | "chat" | "error">("intro");
+  const [typing, setTyping] = useState(false);
+  const [header, setHeader] = useState(ONLINE);
+  const [live, setLive] = useState<string>(INTRO[0]);
+  const [draft, setDraft] = useState("");
+  const [hidden, setHidden] = useState<GuidedBreach[]>([]);
+  const [asked, setAsked] = useState<string[]>([]);
 
-  function resetResult() {
-    if (status === "idle") return;
-    setStatus("idle");
-    setErrorKind("plain");
-    setErrorMessage("");
-    setResult(null);
+  const life = useRef(0);
+  const busy = useRef(false);
+  const seq = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function pause(ms: number) {
+    return new Promise<void>((resolve) => {
+      window.setTimeout(resolve, reducedRef.current ? 0 : ms);
+    });
   }
 
-  const jsLock = mounted && (!consent || status === "sending");
+  function stamp(role: ChatMessage["role"], extra: Partial<ChatMessage>): ChatMessage {
+    seq.current += 1;
+    return { id: `${role}-${session}-${seq.current}`, role, at: clock(), ...extra };
+  }
 
-  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
+  function push(message: ChatMessage, spoken: string) {
+    setMessages((current) => [...current, message]);
+    setLive(spoken);
+  }
+
+  useEffect(() => {
+    const token = { cancel: false };
+    const born = life.current;
+
+    async function say(text: string) {
+      if (token.cancel || life.current !== born) return;
+      setTyping(true);
+      setHeader(TYPING);
+      await pause(560);
+      if (token.cancel || life.current !== born) return;
+      setTyping(false);
+      setHeader(ONLINE);
+      push(stamp("estela", { text }), text);
+      await pause(260);
+    }
+
+    (async () => {
+      await pause(380);
+      if (token.cancel || life.current !== born) return;
+      setMessages((current) =>
+        current.map((message) => (message.id === "hi" && !message.at ? { ...message, at: clock() } : message)),
+      );
+      await say(INTRO[1]);
+      await say(INTRO[2]);
+      await say(ASK_CONSENT);
+      if (token.cancel || life.current !== born) return;
+      setTyping(false);
+      setHeader(ONLINE);
+      setPhase("consent");
+    })();
+
+    return () => {
+      token.cancel = true;
+    };
+    // El saludo se rehace al empezar de nuevo. pause y push leen refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  useEffect(() => {
+    const node = threadRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [messages, typing, phase, hidden]);
+
+  useEffect(() => {
+    if (phase === "email") inputRef.current?.focus();
+  }, [phase]);
+
+  async function tellMore() {
+    if (busy.current) return;
+    busy.current = true;
+    const born = life.current;
+    setPhase("intro");
+    push(stamp("user", { text: TELL_MORE }), TELL_MORE);
+    for (const line of MORE) {
+      if (life.current !== born) return;
+      setTyping(true);
+      setHeader(TYPING);
+      await pause(560);
+      if (life.current !== born) return;
+      setTyping(false);
+      setHeader(ONLINE);
+      push(stamp("estela", { text: line }), line);
+      await pause(240);
+    }
+    if (life.current !== born) return;
+    busy.current = false;
+    setPhase("consent");
+  }
+
+  async function accept() {
+    if (busy.current) return;
+    busy.current = true;
+    const born = life.current;
+    setPhase("intro");
+    push(stamp("user", { text: YES }), YES);
+    setTyping(true);
+    setHeader(TYPING);
+    await pause(480);
+    if (life.current !== born) return;
+    setTyping(false);
+    setHeader(ONLINE);
+    push(stamp("estela", { text: ASK_EMAIL }), ASK_EMAIL);
+    busy.current = false;
+    setPhase("email");
+  }
+
+  async function narrate(view: GuidedView, born: number) {
+    const lead = view.summary.includes("comercial")
+      ? view.summary
+      : (view.speech ?? view.summary);
+    setTyping(true);
+    setHeader(TYPING);
+    await pause(520);
+    if (life.current !== born) return;
+    setTyping(false);
+    setHeader(ONLINE);
+    push(stamp("estela", { text: lead }), lead);
+    await pause(280);
+    if (life.current !== born) return;
+
+    if (!view.found) {
+      setTyping(true);
+      await pause(480);
+      if (life.current !== born) return;
+      setTyping(false);
+      push(stamp("estela", { text: EMPTY_FOLLOW }), EMPTY_FOLLOW);
+      await pause(240);
+    } else if (view.detail) {
+      setTyping(true);
+      await pause(420);
+      if (life.current !== born) return;
+      setTyping(false);
+      push(stamp("estela", { text: view.detail }), view.detail);
+      await pause(220);
+    }
+
+    const all = view.breaches;
+    const shown = all.length > PREVIEW_COUNT ? all.slice(0, PREVIEW_COUNT) : all;
+    const rest = all.slice(shown.length);
+    for (const card of shown) {
+      if (life.current !== born) return;
+      setTyping(true);
+      setHeader(TYPING);
+      await pause(460);
+      if (life.current !== born) return;
+      setTyping(false);
+      setHeader(ONLINE);
+      const spoken = `${card.title}. ${card.happened ?? ""}`;
+      push(stamp("estela", { card }), spoken);
+      await pause(200);
+    }
+    if (rest.length > 0) {
+      if (life.current !== born) return;
+      const line = moreLeft(rest.length);
+      setTyping(true);
+      await pause(400);
+      if (life.current !== born) return;
+      setTyping(false);
+      push(stamp("estela", { text: line }), line);
+      setHidden(rest);
+    } else {
+      setHidden([]);
+    }
+
+    if (life.current !== born) return;
+    setTyping(true);
+    await pause(420);
+    if (life.current !== born) return;
+    setTyping(false);
+    push(stamp("estela", { text: PLAN_LEAD }), PLAN_LEAD);
+    for (const step of view.plan ?? []) {
+      if (life.current !== born) return;
+      const line = `${step.title}. ${step.text}`;
+      setTyping(true);
+      await pause(400);
+      if (life.current !== born) return;
+      setTyping(false);
+      push(stamp("estela", { text: line }), line);
+      await pause(180);
+    }
+    if (view.footnote) {
+      if (life.current !== born) return;
+      push(stamp("estela", { text: view.footnote }), view.footnote);
+    }
+    if (life.current !== born) return;
+    setHeader(ONLINE);
+    setTyping(false);
+    setPhase("chat");
+  }
+
+  async function sendEmail(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!consent) {
-      setResult(null);
-      setErrorKind("plain");
-      setStatus("error");
-      setErrorMessage("Necesitamos que confirmes que compruebas tu propio correo.");
-      return;
-    }
+    const email = draft.trim();
+    const born = life.current;
+    push(stamp("user", { text: email || "…" }), email || "Mensaje vacío");
+    setDraft("");
     if (!isValidEmail(email)) {
-      setResult(null);
-      setErrorKind("plain");
-      setStatus("error");
-      setErrorMessage("Ese email no parece válido, ¿puedes revisarlo?");
+      setTyping(true);
+      setHeader(TYPING);
+      await pause(420);
+      if (life.current !== born) return;
+      setTyping(false);
+      setHeader(ONLINE);
+      push(stamp("estela", { text: BAD_EMAIL }), BAD_EMAIL);
+      setPhase("email");
       return;
     }
 
-    setStep(0);
-    setStatus("sending");
-    setErrorKind("plain");
-    setErrorMessage("");
-    setResult(null);
+    setPhase("checking");
+    setHeader(SEARCHING[0]);
+    setTyping(true);
+    let step = 0;
+    const timer = window.setInterval(() => {
+      step = (step + 1) % SEARCHING.length;
+      setHeader(SEARCHING[step]);
+    }, reducedRef.current ? 1600 : 900);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const response = await fetch("/api/check", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ email: email.trim(), consent }),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email, consent: true }),
+        signal: controller.signal,
       });
       const data: unknown = await response.json().catch(() => null);
-      if (!response.ok) {
+      if (life.current !== born) return;
+      window.clearInterval(timer);
+      setTyping(false);
+      if (!response.ok || !isGuidedView(data)) {
         const message =
           data &&
           typeof data === "object" &&
@@ -141,45 +327,169 @@ export default function BreachCheck() {
           typeof data.message === "string"
             ? data.message
             : "No hemos podido consultar las filtraciones. Prueba de nuevo en un momento.";
-        setErrorKind(response.status === 429 ? "rate" : "plain");
-        setStatus("error");
-        setErrorMessage(message);
+        const rate = response.status === 429;
+        const intro = estelaForError(message, rate);
+        push(stamp("estela", { text: intro }), intro);
+        if (message !== intro) push(stamp("estela", { text: message }), message);
+        const later = againLine();
+        push(stamp("estela", { text: later }), later);
+        setHeader(ONLINE);
+        setPhase("error");
         return;
       }
-      if (!isGuidedView(data)) {
-        setErrorKind("plain");
-        setStatus("error");
-        setErrorMessage(
-          "No hemos podido consultar las filtraciones. Prueba de nuevo en un momento.",
-        );
+      await narrate(data, born);
+    } catch (error) {
+      window.clearInterval(timer);
+      if (life.current !== born || (error instanceof DOMException && error.name === "AbortError")) {
         return;
       }
-      setResult(data);
-      setResultId((current) => current + 1);
-      setStatus("success");
-    } catch {
-      setErrorKind("plain");
-      setStatus("error");
-      setErrorMessage(
-        "No hemos podido consultar las filtraciones. Prueba de nuevo en un momento.",
-      );
+      const intro = estelaForError("", false);
+      push(stamp("estela", { text: intro }), intro);
+      const later = againLine();
+      push(stamp("estela", { text: later }), later);
+      setTyping(false);
+      setHeader(ONLINE);
+      setPhase("error");
     }
   }
 
+  async function showAll() {
+    const born = life.current;
+    const pending = hidden;
+    setHidden([]);
+    setPhase("intro");
+    for (const card of pending) {
+      if (life.current !== born) return;
+      setTyping(true);
+      setHeader(TYPING);
+      await pause(420);
+      if (life.current !== born) return;
+      setTyping(false);
+      setHeader(ONLINE);
+      push(stamp("estela", { card }), `${card.title}. ${card.happened ?? ""}`);
+      await pause(160);
+    }
+    if (life.current !== born) return;
+    setPhase("chat");
+  }
+
+  async function ask(id: string, label: string, answer: string) {
+    const born = life.current;
+    setAsked((current) => (current.includes(id) ? current : [...current, id]));
+    setPhase("intro");
+    push(stamp("user", { text: label }), label);
+    setTyping(true);
+    setHeader(TYPING);
+    await pause(520);
+    if (life.current !== born) return;
+    setTyping(false);
+    setHeader(ONLINE);
+    push(stamp("estela", { text: answer }), answer);
+    setPhase("chat");
+  }
+
+  function restart() {
+    life.current += 1;
+    busy.current = false;
+    abortRef.current?.abort();
+    seq.current = 0;
+    setMessages([greeting()]);
+    setPhase("intro");
+    setTyping(false);
+    setHeader(ONLINE);
+    setLive(INTRO[0]);
+    setDraft("");
+    setHidden([]);
+    setAsked([]);
+    setSession((current) => current + 1);
+  }
+
+  const replies =
+    phase === "consent" ? (
+      <div className="flex flex-wrap gap-2 px-3 pb-3">
+        <Reply onClick={accept}>{YES}</Reply>
+        <Reply onClick={tellMore}>{TELL_MORE}</Reply>
+      </div>
+    ) : phase === "chat" ? (
+      <div className="flex flex-col gap-2 px-3 pb-3">
+        <p className="text-xs text-ink/50">{ASK_HINT}</p>
+        <div className="flex flex-wrap gap-2">
+          {hidden.length > 0 && <Reply onClick={showAll}>{SEE_ALL}</Reply>}
+          {QUESTIONS.filter((question) => !asked.includes(question.id)).map((question) => (
+            <Reply key={question.id} onClick={() => ask(question.id, question.label, question.answer)}>
+              {question.label}
+            </Reply>
+          ))}
+          <Reply onClick={restart}>{RESTART}</Reply>
+        </div>
+      </div>
+    ) : phase === "error" ? (
+      <div className="flex flex-wrap gap-2 px-3 pb-3">
+        <Reply onClick={restart}>{RESTART}</Reply>
+      </div>
+    ) : null;
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      action="/api/check"
-      method="post"
-      className="check-form mt-8 flex w-full flex-col gap-4 text-left"
-    >
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-4">
-        <label htmlFor="check-email" className="sr-only">
-          Tu correo
-        </label>
-        <span className="relative flex-1">
+    <div className="mt-8 w-full overflow-hidden rounded-[1.75rem] border border-ink/10 bg-white/75 text-left shadow-[0_18px_50px_rgba(30,27,75,0.08)]">
+      <header className="flex items-center gap-3 border-b border-ink/10 bg-cream/80 px-4 py-3">
+        <Image
+          src="/brand/symbol.webp"
+          alt=""
+          width={256}
+          height={224}
+          unoptimized
+          className="h-auto w-11 shrink-0"
+        />
+        <div className="min-w-0">
+          <p className="font-serif text-lg font-semibold leading-none">Estela</p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-ink/60">
+            <span className="size-1.5 rounded-full bg-gold" aria-hidden="true" />
+            {typing || phase === "checking" ? header : ONLINE}
+          </p>
+        </div>
+      </header>
+
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {live}
+      </div>
+
+      <div
+        ref={threadRef}
+        id="estela-thread"
+        className="flex max-h-[min(70vh,34rem)] flex-col gap-2 overflow-y-auto px-3 py-4 sm:px-4"
+      >
+        <ol aria-label="Conversación con Estela" className="flex flex-col gap-2">
+          {messages.map((message) => (
+            <li key={message.id} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
+              {message.card ? (
+                <BreachPreview card={message.card} at={message.at} />
+              ) : (
+                <Bubble message={message} />
+              )}
+            </li>
+          ))}
+        </ol>
+        {typing && (
+          <div className="flex justify-start" aria-hidden="true">
+            <div className="flex items-center gap-1 rounded-2xl rounded-tl-md border border-ink/10 bg-white px-3 py-3">
+              <span className="typing-dot size-1.5 rounded-full bg-ink/50" />
+              <span className="typing-dot size-1.5 rounded-full bg-ink/50" />
+              <span className="typing-dot size-1.5 rounded-full bg-ink/50" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {replies}
+
+      {phase === "email" && (
+        <form onSubmit={sendEmail} className="flex items-center gap-2 border-t border-ink/10 px-3 py-3">
+          <label htmlFor="estela-email" className="sr-only">
+            Tu correo
+          </label>
           <input
-            id="check-email"
+            ref={inputRef}
+            id="estela-email"
             name="email"
             type="email"
             inputMode="email"
@@ -188,101 +498,132 @@ export default function BreachCheck() {
             required
             maxLength={EMAIL_MAX_LENGTH}
             placeholder="tu@email.com"
-            value={email}
-            aria-describedby="check-hint"
-            onChange={(event) => {
-              setEmail(event.target.value);
-              resetResult();
-            }}
-            disabled={jsLock}
-            className="peer w-full border-b-2 border-ink/20 bg-transparent px-1 py-3 text-lg text-ink placeholder:text-ink/35 focus:outline-none disabled:opacity-60"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            className="min-w-0 flex-1 rounded-full border border-ink/15 bg-cream/60 px-4 py-2.5 text-base text-ink outline-none placeholder:text-ink/35 focus-visible:ring-2 focus-visible:ring-brand/40"
           />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] origin-left scale-x-0 bg-gradient-to-r from-gold to-violet transition-transform duration-300 peer-focus:scale-x-100"
-          />
-        </span>
-        <button
-          id="check-submit"
-          type="submit"
-          disabled={jsLock}
-          className="rounded-full bg-gold px-7 py-3 font-medium text-[#0b0920] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(212,169,78,0.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-        >
-          {status === "sending" ? "Consultando…" : "Comprobar"}
-        </button>
-      </div>
+          <button
+            type="submit"
+            aria-label="Enviar"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-gold text-[#0b0920] transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+          >
+            <SendIcon />
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
 
-      <label htmlFor="check-consent" className="flex items-start gap-3 text-sm text-ink/80">
-        <input
-          id="check-consent"
-          type="checkbox"
-          name="consent"
-          value="yes"
-          required
-          checked={consent}
-          onChange={(event) => {
-            setConsent(event.target.checked);
-            resetResult();
-          }}
-          disabled={mounted && status === "sending"}
-          className="checkbox-estela mt-0.5"
-        />
-        <span>Solo compruebo mi propio correo.</span>
-      </label>
+function Reply({ children, onClick }: { children: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-full border border-gold/50 bg-cream px-3.5 py-1.5 text-sm text-ink transition-colors hover:bg-gold/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+    >
+      {children}
+    </button>
+  );
+}
 
-      <p id="check-hint" className="consent-hint text-sm text-ink/55">
-        Para comprobar, confirma que el correo es tuyo.
+function Bubble({ message }: { message: ChatMessage }) {
+  const mine = message.role === "user";
+  return (
+    <div
+      className={
+        mine
+          ? "max-w-[85%] rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-cream motion-safe:animate-rise"
+          : "max-w-[85%] rounded-2xl rounded-bl-md border border-ink/10 bg-white px-3.5 py-2 text-ink motion-safe:animate-rise"
+      }
+    >
+      <p className="text-pretty text-[0.95rem] leading-snug">{message.text}</p>
+      <p className={`mt-1 flex items-center justify-end text-[11px] ${mine ? "text-cream/60" : "text-ink/40"}`}>
+        {message.at}
+        {mine && <Ticks />}
       </p>
+    </div>
+  );
+}
 
-      <div ref={resultRef} tabIndex={-1} className="outline-none">
-        {status === "sending" && (
-          <div className="mt-2 motion-safe:animate-rise">
-            <EstelaSays live>
-              <p>{STEPS[step].line}</p>
-            </EstelaSays>
-            <ol className="mt-4 flex flex-col gap-2 text-sm" aria-hidden="true">
-              {STEPS.map((item, index) => (
-                <li
-                  key={item.label}
-                  className={
-                    index === step
-                      ? "font-medium text-ink"
-                      : index < step
-                        ? "text-ink/50"
-                        : "text-ink/35"
-                  }
-                >
-                  <span
-                    className={`mr-2 inline-block size-1.5 rounded-full align-middle ${index <= step ? "bg-gold" : "bg-ink/20"}`}
-                  />
-                  {item.label}
-                  <span className="text-ink/45"> · {item.source}</span>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-4 h-[2px] overflow-hidden rounded-full bg-ink/10" aria-hidden="true">
-              <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-gold to-violet motion-safe:animate-scan" />
-            </div>
-            <div className="mt-4 flex flex-col gap-3" aria-hidden="true">
-              <div className="h-24 rounded-2xl bg-ink/[0.06] motion-safe:animate-pulse" />
-              <div className="h-24 rounded-2xl bg-ink/[0.06] motion-safe:animate-pulse" />
-            </div>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="mt-2 flex flex-col gap-3 motion-safe:animate-rise" role="alert">
-            <EstelaSays>
-              <p>{estelaForError(errorMessage, errorKind)}</p>
-            </EstelaSays>
-            <p className="rounded-2xl border border-ink/10 bg-white/60 px-4 py-3 text-sm text-ink/80">
-              {errorMessage}
-            </p>
-          </div>
-        )}
-
-        {status === "success" && result && <CheckResults key={resultId} view={result} />}
+function BreachPreview({ card, at }: { card: GuidedBreach; at: string }) {
+  const sources = card.sources ?? [];
+  return (
+    <article className="w-full max-w-[95%] overflow-hidden rounded-2xl rounded-bl-md border border-ink/10 bg-white shadow-[0_8px_24px_rgba(30,27,75,0.05)] motion-safe:animate-rise">
+      <div className="border-b border-gold/30 bg-gold/10 px-3.5 py-2.5">
+        <p className="font-serif text-lg font-semibold leading-tight">{card.title}</p>
+        <p className="mt-0.5 text-xs text-ink/60">
+          {card.date}
+          {card.domain ? ` · ${card.domain}` : ""}
+        </p>
       </div>
-    </form>
+      <div className="space-y-2.5 px-3.5 py-3 text-sm text-ink/85">
+        {card.happened && <p>{card.happened}</p>}
+        <ul className="flex flex-wrap gap-1.5">
+          {card.leaked.map((item) => (
+            <li key={item} className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs text-ink/80">
+              {item}
+            </li>
+          ))}
+        </ul>
+        {card.means && (
+          <p>
+            <span className="font-medium text-ink">Qué significa. </span>
+            {card.means}
+          </p>
+        )}
+        {card.todo && (
+          <p>
+            <span className="font-medium text-ink">Qué haría yo. </span>
+            {card.todo}
+          </p>
+        )}
+        {card.note && <p className="text-ink/60">{card.note}</p>}
+        {sources.length > 0 && (
+          <p className="text-xs text-ink/55">
+            {sources.length > 1 ? "Fuentes" : "Fuente"}:{" "}
+            {sources.map((source, index) => {
+              const href = SOURCE_HREF[source.id];
+              return (
+                <span key={`${source.id}-${source.label}`}>
+                  {index > 0 ? " y " : null}
+                  {href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener"
+                      className="underline decoration-dotted underline-offset-4 hover:text-ink"
+                    >
+                      {source.label}
+                    </a>
+                  ) : (
+                    source.label
+                  )}
+                </span>
+              );
+            })}
+          </p>
+        )}
+        {at && <p className="text-right text-[11px] text-ink/40">{at}</p>}
+      </div>
+    </article>
+  );
+}
+
+function Ticks() {
+  return (
+    <svg viewBox="0 0 16 11" className="ml-1 inline-block h-2.5 w-3.5" aria-hidden="true">
+      <path d="M1 6.2 3.1 8.3 7 3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.2 6.5 7.3 8.6 14.5 2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+      <path d="M4 12h11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M13 6.5 19.5 12 13 17.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

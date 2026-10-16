@@ -36,7 +36,8 @@ Cloudflare Pages) más **dos funciones con servidor**:
   públicas entran por `lib/providers` y, si se consultan, se nombran en la
   tarjeta. No guarda el correo. El navegador no habla con ellos ni ve la clave
   ([ADR 0013](docs/decisions/0013-consulta-de-filtraciones-sin-guardar-el-correo.md),
-  [ADR 0014](docs/decisions/0014-resultados-con-estela-y-varias-fuentes.md)).
+  [ADR 0014](docs/decisions/0014-resultados-con-estela-y-varias-fuentes.md),
+  [ADR 0015](docs/decisions/0015-conversacion-con-estela.md)).
 - [functions/api/waitlist.ts](functions/api/waitlist.ts) valida el alta en la
   lista de espera, la registra en Resend y envía el email de bienvenida.
 

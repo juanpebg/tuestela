@@ -1,5 +1,5 @@
 // Pasa de la ficha cruda a una explicación que se puede leer con calma:
-// qué pasó, qué significa, qué haría Estela, y un plan corto al final.
+// qué pasó, qué significa y qué haría Estela.
 // No cambia el orden ni el texto de presentBreaches; reordena una copia.
 
 import type { BreachCard, CheckView } from "./breaches";
@@ -115,7 +115,7 @@ function todo(card: BreachCard): string {
 
 function foundSpeech(count: number): string {
   const noun = count === 1 ? "una filtración" : `${count} filtraciones`;
-  return `Vamos a verlo juntos. He encontrado ${noun}. No es culpa tuya: quien perdió los datos fue el servicio. Abajo te cuento qué pasó, qué significa y qué haría yo primero.`;
+  return `Vamos a verlo juntos. He encontrado ${noun}. No es culpa tuya: quien perdió los datos fue el servicio. Te cuento qué pasó y qué haría yo.`;
 }
 
 function recount(count: number): { summary: string; detail: string } {
@@ -123,7 +123,7 @@ function recount(count: number): { summary: string; detail: string } {
   return {
     summary: `Este correo aparece en ${noun}.`,
     detail:
-      "Abajo tienes qué pasó, qué significa y un plan corto. Cada tarjeta dice de qué fuente viene.",
+      "Cada tarjeta dice qué pasó, qué significa y de qué fuente viene.",
   };
 }
 
