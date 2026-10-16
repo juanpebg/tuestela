@@ -34,6 +34,7 @@ entendemos lo suficiente como para tomarla.**
 | [0011](0011-tipografia-original-y-simbolo-en-iconos.md) | Recuperar la tipografía original y usar el símbolo en los iconos | Aceptada; favicon complementado por 0012 |
 | [0012](0012-favicon-transparente.md) | Favicon transparente | Aceptada |
 | [0013](0013-consulta-de-filtraciones-sin-guardar-el-correo.md) | Consultar filtraciones sin guardar el correo | Aceptada |
+| [0014](0014-resultados-con-estela-y-varias-fuentes.md) | Resultados con Estela y varias fuentes públicas | Aceptada |
 
 ¿Ves un fallo en alguna decisión? Ábrenos un issue. Que nos corrijan en público es
 parte del plan.

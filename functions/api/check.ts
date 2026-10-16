@@ -1,23 +1,22 @@
 // POST /api/check — consulta si un correo aparece en filtraciones conocidas.
 // Cloudflare Pages publica este archivo en /api/check.
 //
-// El navegador solo habla con nosotros (ADR 0003). La clave de Have I Been
-// Pwned vive en el entorno, nunca en el cliente. No guardamos el correo ni
-// lo escribimos en los logs: la URL de salida lo lleva en la ruta y un
-// error de fetch podría incluirla. Decisión: ADR 0013.
+// El navegador solo habla con nosotros (ADR 0003). Las fuentes viven en
+// lib/providers: Have I Been Pwned siempre, y XposedOrNot solo si la bandera
+// está encendida. La clave no sale del entorno. No guardamos el correo ni lo
+// escribimos en los logs. Decisiones: ADR 0013 y ADR 0014.
 
-import { presentBreaches, noBreachView, type CheckView } from "../../lib/breaches";
+import type { GuidedBreach, GuidedView } from "../../lib/guide";
+import { consult } from "../../lib/providers/registry";
 import { isValidEmail } from "../../lib/validation";
 
 interface Env {
   HIBP_API_KEY?: string;
+  XPOSEDORNOT_ENABLED?: string;
 }
 
 type CheckContext = { request: Request; env: Env };
 
-const HIBP_BREACH_API = "https://haveibeenpwned.com/api/v3/breachedaccount/";
-const HIBP_USER_AGENT = "tuestela.es";
-const HIBP_TIMEOUT_MS = 10_000;
 const BODY_LIMIT = 4_096;
 
 // Por debajo de las 10 consultas/minuto de la suscripción Core 1, para dejar
@@ -99,17 +98,6 @@ function rememberCooldown(seconds: number, now: number) {
   if (until > cooldownUntil) cooldownUntil = until;
 }
 
-function parseRetryAfter(header: string | null, now: number): number {
-  if (!header) return 60;
-  const trimmed = header.trim();
-  if (/^\d+$/.test(trimmed)) {
-    return Math.min(3600, Math.max(1, Number(trimmed)));
-  }
-  const when = Date.parse(trimmed);
-  if (Number.isNaN(when)) return 60;
-  return Math.min(3600, Math.max(1, Math.ceil((when - now) / 1000)));
-}
-
 function escapeHtml(text: string): string {
   return text
     .replaceAll("&", "&amp;")
@@ -156,7 +144,7 @@ function respondHtml(status: number, main: string, retryAfter?: number): Respons
     "referrer-policy": "no-referrer",
     "x-robots-tag": "noindex, nofollow",
     "content-security-policy":
-      "default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   });
   if (status === 429 && retryAfter !== undefined) {
     headers.set("retry-after", String(retryAfter));
@@ -170,16 +158,40 @@ function attribution(): string {
 }
 
 function renderMessage(message: string): string {
-  return `<h1 style="font-size:1.6rem">No hemos podido completar la consulta</h1><p>${escapeHtml(message)}</p>`;
+  return `<h1 style="font-size:1.6rem">Ahora mismo no he podido mirarlo</h1><p>${escapeHtml(message)}</p><p>Puedes volver a intentarlo en un momento. No guardamos el correo.</p>`;
 }
 
-function renderView(view: CheckView): string {
+function sourceLine(breach: GuidedBreach): string {
+  const labels = breach.sources.map((source) => escapeHtml(source.label)).join(" y ");
+  const word = breach.sources.length > 1 ? "Fuentes" : "Fuente";
+  return `${word}: ${labels}`;
+}
+
+function groupHeading(group: GuidedBreach["group"], hasPriority: boolean): string {
+  if (group === "primero") return "Empezaría por aquí";
+  return hasPriority ? "También apareció en" : "Esto es lo que apareció";
+}
+
+function renderView(view: GuidedView): string {
+  const hasPriority = view.breaches.some((breach) => breach.group === "primero");
+  let last = "";
   const breaches = view.breaches
     .map((breach) => {
+      const heading =
+        breach.group === last
+          ? ""
+          : `<h2 style="font-size:1.2rem;margin-top:1.75rem">${groupHeading(breach.group, hasPriority)}</h2>`;
+      last = breach.group;
       const meta = [breach.date, breach.domain].filter(Boolean).join(" · ");
       const leaked = breach.leaked.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-      return `<article style="margin:1.5rem 0;padding-top:1rem;border-top:1px solid rgba(30,27,75,0.15)"><h2 style="font-size:1.3rem;margin-bottom:0.25rem">${escapeHtml(breach.title)}</h2><p>${escapeHtml(meta)}</p>${breach.affected ? `<p>${escapeHtml(breach.affected)}</p>` : ""}${breach.note ? `<p>${escapeHtml(breach.note)}</p>` : ""}<h3 style="font-size:1rem">Qué se filtró</h3><ul>${leaked}</ul></article>`;
+      return `${heading}<details open style="margin:0.75rem 0"><summary style="font-size:1.2rem">${escapeHtml(breach.title)}</summary><p>${escapeHtml(meta)}</p><p>${sourceLine(breach)}</p><p>${escapeHtml(breach.happened)}</p>${breach.note ? `<p>${escapeHtml(breach.note)}</p>` : ""}<h3 style="font-size:1rem">Qué datos salieron</h3><ul>${leaked}</ul><p><strong>Qué significa.</strong> ${escapeHtml(breach.means)}</p><p><strong>Qué haría yo.</strong> ${escapeHtml(breach.todo)}</p></details>`;
     })
+    .join("");
+  const plan = view.plan
+    .map(
+      (step, index) =>
+        `<li><strong>${index + 1}. ${escapeHtml(step.title)}.</strong> ${escapeHtml(step.text)}</li>`,
+    )
     .join("");
   const advice = view.advice
     .map(
@@ -189,9 +201,9 @@ function renderView(view: CheckView): string {
     .join("");
   const adviceBlock =
     view.advice.length > 0
-      ? `<h2 style="font-size:1.4rem;margin-top:2rem">Qué puedes hacer</h2>${advice}`
+      ? `<h2 style="font-size:1.3rem;margin-top:2rem">Si quieres el detalle de cada dato</h2>${advice}`
       : "";
-  return `<h1 style="font-size:1.8rem">${escapeHtml(view.summary)}</h1><p>${escapeHtml(view.detail)}</p>${breaches}${adviceBlock}${view.footnote ? `<p>${escapeHtml(view.footnote)}</p>` : ""}`;
+  return `<p><img src="/brand/symbol.webp" alt="" width="64" height="56"></p><p><strong>Estela.</strong> ${escapeHtml(view.speech)}</p><h1 style="font-size:1.8rem">${escapeHtml(view.summary)}</h1><p>${escapeHtml(view.detail)}</p>${breaches}<h2 style="font-size:1.3rem;margin-top:2rem">Un plan corto</h2><ol>${plan}</ol>${adviceBlock}${view.footnote ? `<p>${escapeHtml(view.footnote)}</p>` : ""}`;
 }
 
 type Payload = { email: string; consent: boolean };
@@ -235,19 +247,6 @@ function configuredKey(env: Env): string | null {
   return key;
 }
 
-function discard(response: Response) {
-  try {
-    void response.body?.cancel();
-  } catch {
-    // Si el cuerpo ya no se puede cancelar, seguimos sin leerlo.
-  }
-}
-
-function breachUrl(email: string): string {
-  const account = encodeURIComponent(email);
-  return `${HIBP_BREACH_API}${account}?truncateResponse=false&IncludeUnverified=false`;
-}
-
 export async function onRequestPost(context: CheckContext): Promise<Response> {
   const { request, env } = context;
   const html = wantsHtml(request);
@@ -270,71 +269,23 @@ export async function onRequestPost(context: CheckContext): Promise<Response> {
     return respondError(html, 429, rateLimitMessage(slot.retryAfter), slot.retryAfter);
   }
 
-  // La URL lleva el correo. No registrarla ni registrar el error de red.
-  let upstream: Response;
-  try {
-    upstream = await fetch(breachUrl(email), {
-      headers: {
-        "hibp-api-key": key,
-        "user-agent": HIBP_USER_AGENT,
-        accept: "application/json",
-      },
-      redirect: "manual",
-      signal: AbortSignal.timeout(HIBP_TIMEOUT_MS),
-    });
-  } catch {
-    console.error("HIBP: fallo de red o tiempo de espera agotado.");
+  const result = await consult(email, key, env.XPOSEDORNOT_ENABLED);
+  if (!result.ok) {
+    console.error(result.log);
+    if (result.status === 429) {
+      const retryAfter = result.retryAfter ?? 60;
+      rememberCooldown(retryAfter, Date.now());
+      return respondError(html, 429, rateLimitMessage(retryAfter), retryAfter);
+    }
+    if (result.status === 400) return respondError(html, 400, MSG_BAD_EMAIL);
     return respondError(html, 502, MSG_UPSTREAM);
   }
 
-  if (upstream.status >= 300 && upstream.status < 400) {
-    discard(upstream);
-    console.error("HIBP: redirección no seguida.");
-    return respondError(html, 502, MSG_UPSTREAM);
-  }
-
-  if (upstream.status === 404) {
-    discard(upstream);
-    return respondView(html, noBreachView());
-  }
-
-  if (upstream.status === 429) {
-    const retryAfter = parseRetryAfter(upstream.headers.get("retry-after"), Date.now());
-    discard(upstream);
-    rememberCooldown(retryAfter, Date.now());
-    console.error("HIBP: 429");
-    return respondError(html, 429, rateLimitMessage(retryAfter), retryAfter);
-  }
-
-  if (upstream.status === 400) {
-    discard(upstream);
-    console.error("HIBP: 400");
-    return respondError(html, 400, MSG_BAD_EMAIL);
-  }
-
-  if (!upstream.ok) {
-    console.error(`HIBP: ${upstream.status}`);
-    discard(upstream);
-    return respondError(html, 502, MSG_UPSTREAM);
-  }
-
-  let body: unknown;
-  try {
-    body = await upstream.json();
-  } catch {
-    console.error("HIBP: respuesta ilegible.");
-    return respondError(html, 502, MSG_UPSTREAM);
-  }
-
-  const view = presentBreaches(body);
-  if (!view) {
-    console.error("HIBP: respuesta inesperada.");
-    return respondError(html, 502, MSG_UPSTREAM);
-  }
-  return respondView(html, view);
+  if (result.log) console.error(result.log);
+  return respondView(html, result.view);
 }
 
-function respondView(html: boolean, view: CheckView): Response {
+function respondView(html: boolean, view: GuidedView): Response {
   if (html) return respondHtml(200, renderView(view));
   return respondJson(200, { ok: true, ...view });
 }

@@ -32,8 +32,11 @@ Una web 100 % estática (Next.js con `output: 'export'`, servida por el CDN de
 Cloudflare Pages) más **dos funciones con servidor**:
 
 - [functions/api/check.ts](functions/api/check.ts) consulta si un correo aparece
-  en filtraciones de Have I Been Pwned. No guarda el correo. El navegador no
-  habla con ellos ni ve la clave ([ADR 0013](docs/decisions/0013-consulta-de-filtraciones-sin-guardar-el-correo.md)).
+  en filtraciones. La fuente principal es Have I Been Pwned; otras fuentes
+  públicas entran por `lib/providers` y, si se consultan, se nombran en la
+  tarjeta. No guarda el correo. El navegador no habla con ellos ni ve la clave
+  ([ADR 0013](docs/decisions/0013-consulta-de-filtraciones-sin-guardar-el-correo.md),
+  [ADR 0014](docs/decisions/0014-resultados-con-estela-y-varias-fuentes.md)).
 - [functions/api/waitlist.ts](functions/api/waitlist.ts) valida el alta en la
   lista de espera, la registra en Resend y envía el email de bienvenida.
 
@@ -78,6 +81,7 @@ pausadas no hace falta ninguna clave de Resend.
 | `RESEND_AUDIENCE_ID` | ID de la audiencia donde se registran las altas | resend.com → Audiences |
 | `RESEND_FROM` | Remitente del email de bienvenida, p. ej. `tuEstela <hola@dominio.com>` | Dominio verificado en resend.com → Domains |
 | `HIBP_API_KEY` | Clave de Have I Been Pwned para `POST /api/check` | haveibeenpwned.com → API key |
+| `XPOSEDORNOT_ENABLED` | Opcional. `true`, `1` o `yes` consulta también XposedOrNot. Apagada por defecto | No pide clave |
 
 Ver [.dev.vars.example](.dev.vars.example) para el detalle de cada una.
 
@@ -96,6 +100,19 @@ pruebas. Solo en el entorno:
 La suscripción Core 1 permite unas 10 consultas por minuto, compartidas por
 toda la web. La función se queda un poco por debajo y, si HIBP responde 429,
 enseña una espera y respeta el encabezado `retry-after`.
+
+### Otras fuentes
+
+Have I Been Pwned es la única que se consulta si no se dice lo contrario.
+`XPOSEDORNOT_ENABLED` (`true`, `1` o `yes`) añade
+[XposedOrNot](https://xposedornot.com), una API pública sin clave. El correo
+también sale hacia allí, así que la bandera nace apagada. Solo se llama
+después de una respuesta real de HIBP: un límite o un fallo no reenvían el
+correo. Si XposedOrNot no contesta, se enseña igual lo que dijo HIBP.
+
+Pwned Passwords (la comprobación de una contraseña por k-anonimato, sin
+enviarla entera) no forma parte de esta consulta. El hueco está descrito en
+`lib/providers/types.ts` para no mezclarla con el correo.
 
 ## Despliegue
 

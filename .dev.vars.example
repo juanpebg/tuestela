@@ -19,3 +19,8 @@ RESEND_FROM="tuEstela <hola@tudominio.com>"
 # haveibeenpwned.com → API key. Pega aquí la tuya: este valor es un marcador,
 # no una clave. En Cloudflare Pages va cifrada (Encrypt), en Production y en Preview.
 HIBP_API_KEY=pega-aqui-la-clave
+
+# Segunda fuente pública, apagada. Con true, 1 o yes, y solo si Have I Been
+# Pwned ya ha respondido, también se pregunta a XposedOrNot (sin clave).
+# El correo sale hacia ese servicio. Déjalo en false si no lo quieres.
+XPOSEDORNOT_ENABLED=false

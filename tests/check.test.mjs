@@ -17,6 +17,10 @@ async function compile(relativePath) {
 
 const validationCode = await compile("../lib/validation.ts");
 const breachesCode = await compile("../lib/breaches.ts");
+const guideCode = await compile("../lib/guide.ts");
+const hibpCode = await compile("../lib/providers/hibp.ts");
+const xonCode = await compile("../lib/providers/xposedornot.ts");
+const registryCode = await compile("../lib/providers/registry.ts");
 const checkCode = await compile("../functions/api/check.ts");
 
 // Valor falso a propósito: no es una clave de Have I Been Pwned.
@@ -28,20 +32,10 @@ function harness(fetchImplementation, { expired = false } = {}) {
   const calls = [];
   const logs = [];
   const timeouts = [];
-  const validation = {};
-  vm.runInNewContext(validationCode, { exports: validation });
-  const breaches = {};
-  vm.runInNewContext(breachesCode, { exports: breaches });
-  const exported = {};
-  vm.runInNewContext(checkCode, {
-    exports: exported,
-    require(specifier) {
-      if (specifier === "../../lib/breaches") return breaches;
-      assert.equal(specifier, "../../lib/validation");
-      return validation;
-    },
+  const shared = {
     Response,
     Headers,
+    URL,
     URLSearchParams,
     AbortSignal: {
       timeout(milliseconds) {
@@ -59,7 +53,40 @@ function harness(fetchImplementation, { expired = false } = {}) {
       if (!fetchImplementation) throw new Error("Red no permitida en pruebas");
       return fetchImplementation(url, init, calls.length);
     },
-  });
+  };
+  const boxes = {
+    "../../lib/validation": {},
+    "../breaches": {},
+    "../../lib/breaches": {},
+    "../guide": {},
+    "../../lib/guide": {},
+    "./hibp": {},
+    "./xposedornot": {},
+    "../../lib/providers/registry": {},
+  };
+  boxes["../../lib/breaches"] = boxes["../breaches"];
+  boxes["../../lib/guide"] = boxes["../guide"];
+
+  function run(code, box) {
+    vm.runInNewContext(code, {
+      exports: box,
+      require(specifier) {
+        const found = boxes[specifier];
+        if (!found) throw new Error(`require inesperado: ${specifier}`);
+        return found;
+      },
+      ...shared,
+    });
+  }
+
+  run(validationCode, boxes["../../lib/validation"]);
+  run(breachesCode, boxes["../breaches"]);
+  run(guideCode, boxes["../guide"]);
+  run(hibpCode, boxes["./hibp"]);
+  run(xonCode, boxes["./xposedornot"]);
+  run(registryCode, boxes["../../lib/providers/registry"]);
+  const exported = {};
+  run(checkCode, exported);
 
   return {
     calls,
@@ -140,6 +167,12 @@ test("200 traduce la filtración y llama a HIBP sin guardar el correo en la resp
   assert.equal(body.found, true);
   assert.equal(body.breaches[0].title, "Adobe");
   assert.equal(body.breaches[0].date, "4 de octubre de 2013");
+  assert.equal(body.breaches[0].sources[0].label, "Have I Been Pwned");
+  assert.equal(body.breaches[0].group, "primero");
+  assert.match(body.speech, /Vamos a verlo juntos/);
+  assert.equal(body.plan.length, 3);
+  assert.equal(JSON.stringify(body).toLowerCase().includes("peligro"), false);
+  assert.equal(JSON.stringify(body).toLowerCase().includes("hackeado"), false);
   assert.ok(body.breaches.some((item) => item.title === "SoloNombre"));
   assert.ok(body.advice.some((item) => item.label === "Contraseñas"));
   assert.ok(body.advice.some((item) => item.label === "Teléfonos"));
@@ -174,6 +207,8 @@ test("404 es un resultado vacío, no un error", async () => {
   assert.equal(body.found, false);
   assert.deepEqual(body.breaches, []);
   assert.match(body.summary, /Buena señal/);
+  assert.match(body.speech, /No apareces en ninguna filtración/);
+  assert.equal(body.plan.length, 3);
   assertNoSecrets(JSON.stringify(body));
   assert.equal(app.logs.length, 0);
 });
@@ -347,6 +382,60 @@ async function walk(dir) {
   }
   return files;
 }
+
+test("con la segunda fuente apagada no se llama", async () => {
+  const app = harness((url) => {
+    assert.equal(String(url).includes("xposedornot"), false);
+    return json([]);
+  });
+  await app.submit(undefined, { env: { ...defaultEnv, XPOSEDORNOT_ENABLED: "false" } });
+  assert.equal(app.calls.length, 1);
+});
+
+test("la segunda fuente solo entra si HIBP respondió y la bandera está encendida", async () => {
+  const app = harness((url) => {
+    const href = String(url);
+    if (href.includes("xposedornot")) return json({ breaches: [["Adobe", "Canva"]] });
+    return json([adobe()]);
+  });
+  const response = await app.submit(undefined, { env: { ...defaultEnv, XPOSEDORNOT_ENABLED: "yes" } });
+  assert.equal(response.status, 200);
+  assert.equal(app.calls.length, 2);
+  assert.equal(app.calls[1].headers["user-agent"], "tuestela.es");
+  assert.equal(app.calls[1].redirect, "manual");
+  assert.equal(app.timeouts[1], 8000);
+  const body = await response.json();
+  const adobeCard = body.breaches.find((item) => item.title === "Adobe");
+  assert.ok(adobeCard.sources.some((source) => source.label === "XposedOrNot"));
+  assert.ok(body.breaches.some((item) => item.title === "Canva"));
+  assert.equal(body.breaches[0].title, "Adobe");
+  assertNoSecrets(JSON.stringify(body));
+  assertNoSecrets(app.logs.join("\n"));
+});
+
+test("un 429 de HIBP no reenvía el correo a la segunda fuente", async () => {
+  const app = harness((url) => {
+    assert.equal(String(url).includes("xposedornot"), false);
+    return new Response(null, { status: 429, headers: { "retry-after": "12" } });
+  });
+  const response = await app.submit(undefined, { env: { ...defaultEnv, XPOSEDORNOT_ENABLED: "true" } });
+  assert.equal(response.status, 429);
+  assert.equal(app.calls.length, 1);
+});
+
+test("si la segunda fuente falla, se enseña lo de HIBP y el log no lleva el correo", async () => {
+  const app = harness((url) => {
+    if (String(url).includes("xposedornot")) {
+      throw new Error(`fallo ${email} https://api.xposedornot.com/v1/check-email/${email}`);
+    }
+    return json([adobe()]);
+  });
+  const response = await app.submit(undefined, { env: { ...defaultEnv, XPOSEDORNOT_ENABLED: "1" } });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).breaches[0].title, "Adobe");
+  assert.match(app.logs.join("\n"), /XposedOrNot: no disponible/);
+  assertNoSecrets(app.logs.join("\n"));
+});
 
 test("el repositorio no contiene una clave de HIBP ni la API en el cliente", async () => {
   const root = path.resolve(new URL("..", import.meta.url).pathname);

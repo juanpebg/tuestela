@@ -44,6 +44,20 @@
     }
   }
 
+  /* Aparición de la respuesta: sube un poco y se asienta. */
+  --animate-rise: rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   /* Barra de espera de la consulta: un segmento de estela barre la guía. */
   --animate-scan: scan 0.9s ease-in-out infinite;
 
@@ -178,6 +192,24 @@
   background-size: 80%;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+/* Sin la casilla, el correo y el botón no se usan. El HTML inicial no lleva
+   disabled: sin JavaScript la casilla required sigue bastando, y :has cierra
+   el campo hasta que se marca. Con JavaScript, además se deshabilitan. */
+.check-form:not(:has(#check-consent:checked)) :is(#check-email, #check-submit) {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.check-form:has(#check-consent:checked) .consent-hint {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .check-card[open] .check-card-body {
+    animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 /* Interludio nocturno (escena de ambición): anochece y amanece en simetría,
