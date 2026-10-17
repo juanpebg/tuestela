@@ -6,6 +6,7 @@ import test from "node:test";
 const FILES = [
   "../components/BreachCheck.tsx",
   "../components/check/copy.ts",
+  "../components/check/cards.ts",
   "../components/check/lessons.ts",
   "../components/scenes/Comprobar.tsx",
   "../lib/guide.ts",

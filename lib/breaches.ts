@@ -674,6 +674,9 @@ const EMPTY_DETAIL =
   "Eso no demuestra que no exista nada más sobre ti en internet. Solo que, en esta lista, no hay una filtración verificada con este correo.";
 const FOUND_DETAIL =
   "Te cuento qué se filtró y qué puedes hacer, con calma y por partes.";
+// El mismo umbral que en la guía: con muchas fichas el detalle no promete
+// recorrerlas todas, porque el chat solo abre las primeras.
+const MANY = 20;
 const DATE_FOOTNOTE =
   "La fecha es orientativa: a menudo la filtración se descubre mucho después.";
 const UNDATED = "Fecha no indicada";
@@ -810,6 +813,12 @@ function summaryFor(count: number, commercialOnly: boolean): { summary: string; 
     };
   }
   const noun = count === 1 ? "1 filtración" : `${count} filtraciones`;
+  if (count >= MANY) {
+    return {
+      summary: `Este correo aparece en ${noun}.`,
+      detail: `Son ${count} en total. No hace falta mirarlas una a una: te dejo las primeras y el resto, por si quieres verlo.`,
+    };
+  }
   return {
     summary: `Este correo aparece en ${noun}.`,
     detail: FOUND_DETAIL,

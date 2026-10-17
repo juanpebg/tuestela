@@ -100,6 +100,40 @@ test("un nombre repetido suma la fuente y uno nuevo abre otra tarjeta", () => {
   assert.match(view.summary, /2 filtraciones/);
 });
 
+test("con muchas filtraciones el primer mensaje no abre con el número", () => {
+  const breaches = Array.from({ length: 257 }, (_, index) =>
+    card({ title: `Servicio ${index}`, date: "4 de octubre de 2013" }),
+  );
+  const view = compose({
+    found: true,
+    summary: "Este correo aparece en 257 filtraciones.",
+    detail:
+      "Son 257 en total. No hace falta mirarlas una a una: te dejo las primeras y el resto, por si quieres verlo.",
+    footnote: "La fecha es orientativa.",
+    advice: [],
+    breaches,
+  });
+  assert.equal(view.breaches.length, 257);
+  assert.match(view.speech, /Hay bastantes/);
+  assert.equal(view.speech.includes("He encontrado"), false);
+  assert.equal(view.speech.includes("257"), false);
+  assert.match(view.speech, /No es culpa tuya/);
+  assert.equal(view.breaches[0].leaked.includes("Direcciones de correo"), true);
+});
+
+test("con pocas filtraciones el primer mensaje sigue diciendo cuántas son", () => {
+  const view = compose({
+    found: true,
+    summary: "Este correo aparece en 2 filtraciones.",
+    detail: "detalle",
+    footnote: null,
+    advice: [],
+    breaches: [card({ title: "Una" }), card({ title: "Otra", date: "2 de marzo de 2024" })],
+  });
+  assert.match(view.speech, /He encontrado 2 filtraciones/);
+  assert.match(view.speech, /No es culpa tuya/);
+});
+
 test("una lista comercial no se coloca como lo primero", () => {
   const view = compose({
     found: true,

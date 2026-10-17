@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Component, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   againLine,
   ASK_CONSENT,
@@ -26,7 +26,8 @@ import {
   TYPING,
   YES,
 } from "@/components/check/copy";
-import type { ChatMessage, GuidedBreach, GuidedView } from "@/components/check/types";
+import { fallbackCard, usableCard } from "@/components/check/cards";
+import type { ChatMessage, GuidedBreach, GuidedView, PlanStep } from "@/components/check/types";
 import { EMAIL_MAX_LENGTH, isValidEmail } from "@/lib/validation";
 
 const PREVIEW_COUNT = 2;
@@ -94,6 +95,15 @@ export default function BreachCheck() {
   const abortRef = useRef<AbortController | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const watchdogRef = useRef<number | null>(null);
+  const pinScroll = useRef<number | null>(null);
+
+  function disarmWatchdog() {
+    if (watchdogRef.current !== null) {
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  }
 
   function pause(ms: number) {
     return new Promise<void>((resolve) => {
@@ -153,6 +163,11 @@ export default function BreachCheck() {
   useEffect(() => {
     const node = threadRef.current;
     if (!node) return;
+    if (pinScroll.current !== null) {
+      node.scrollTop = pinScroll.current;
+      pinScroll.current = null;
+      return;
+    }
     node.scrollTop = node.scrollHeight;
   }, [messages, typing, phase, hidden]);
 
@@ -203,84 +218,93 @@ export default function BreachCheck() {
     const lead = view.summary.includes("comercial")
       ? view.summary
       : (view.speech ?? view.summary);
-    setTyping(true);
-    setHeader(TYPING);
-    await pause(520);
-    if (life.current !== born) return;
-    setTyping(false);
-    setHeader(ONLINE);
-    push(stamp("estela", { text: lead }), lead);
-    await pause(280);
-    if (life.current !== born) return;
+    const cards = view.breaches.flatMap((card) => {
+      const usable = usableCard(card);
+      return usable ? [usable] : [];
+    });
+    const steps = (view.plan ?? []).filter(
+      (step): step is PlanStep =>
+        Boolean(step) && typeof step.title === "string" && typeof step.text === "string" && step.title !== "" && step.text !== "",
+    );
+    let committed = false;
 
-    if (!view.found) {
-      setTyping(true);
-      await pause(480);
-      if (life.current !== born) return;
+    // Las tarjetas y los botones salen en el mismo turno que el detalle.
+    // Si la pausa de después no llega a reanudarse, el hilo no se queda
+    // en las dos frases sin un paso siguiente.
+    function commit() {
+      if (committed || life.current !== born) return;
+      committed = true;
+      disarmWatchdog();
       setTyping(false);
-      push(stamp("estela", { text: EMPTY_FOLLOW }), EMPTY_FOLLOW);
-      await pause(240);
-    } else if (view.detail) {
-      setTyping(true);
-      await pause(420);
-      if (life.current !== born) return;
-      setTyping(false);
-      push(stamp("estela", { text: view.detail }), view.detail);
-      await pause(220);
+      setHeader(ONLINE);
+      if (!view.found) {
+        push(stamp("estela", { text: EMPTY_FOLLOW }), EMPTY_FOLLOW);
+        setHidden([]);
+        setPhase("chat");
+        return;
+      }
+      if (view.detail) push(stamp("estela", { text: view.detail }), view.detail);
+      const shown = cards.slice(0, PREVIEW_COUNT);
+      const rest = cards.slice(shown.length);
+      const visible = shown.length > 0 ? shown : [fallbackCard()];
+      for (const card of visible) {
+        push(stamp("estela", { card }), `${card.title}. ${card.happened ?? ""}`);
+      }
+      if (rest.length > 0) {
+        const line = moreLeft(rest.length);
+        push(stamp("estela", { text: line }), line);
+        setHidden(rest);
+      } else {
+        setHidden([]);
+      }
+      setPhase("chat");
     }
 
-    const all = view.breaches;
-    const shown = all.length > PREVIEW_COUNT ? all.slice(0, PREVIEW_COUNT) : all;
-    const rest = all.slice(shown.length);
-    for (const card of shown) {
-      if (life.current !== born) return;
+    disarmWatchdog();
+    watchdogRef.current = window.setTimeout(commit, reducedRef.current ? 700 : 2500);
+    try {
       setTyping(true);
       setHeader(TYPING);
-      await pause(460);
+      await pause(520);
       if (life.current !== born) return;
       setTyping(false);
       setHeader(ONLINE);
-      const spoken = `${card.title}. ${card.happened ?? ""}`;
-      push(stamp("estela", { card }), spoken);
-      await pause(200);
-    }
-    if (rest.length > 0) {
+      push(stamp("estela", { text: lead }), lead);
+      await pause(view.found ? 420 : 480);
       if (life.current !== born) return;
-      const line = moreLeft(rest.length);
-      setTyping(true);
-      await pause(400);
-      if (life.current !== born) return;
-      setTyping(false);
-      push(stamp("estela", { text: line }), line);
-      setHidden(rest);
-    } else {
-      setHidden([]);
-    }
+      commit();
+      if (!view.found || life.current !== born) return;
 
-    if (life.current !== born) return;
-    setTyping(true);
-    await pause(420);
-    if (life.current !== born) return;
-    setTyping(false);
-    push(stamp("estela", { text: PLAN_LEAD }), PLAN_LEAD);
-    for (const step of view.plan ?? []) {
+      if (steps.length > 0) {
+        setTyping(true);
+        setHeader(TYPING);
+        await pause(420);
+        if (life.current !== born) return;
+        setTyping(false);
+        setHeader(ONLINE);
+        push(stamp("estela", { text: PLAN_LEAD }), PLAN_LEAD);
+        for (const step of steps) {
+          if (life.current !== born) return;
+          const line = `${step.title}. ${step.text}`;
+          setTyping(true);
+          await pause(400);
+          if (life.current !== born) return;
+          setTyping(false);
+          push(stamp("estela", { text: line }), line);
+          await pause(180);
+        }
+      }
+      if (view.footnote && life.current === born) {
+        push(stamp("estela", { text: view.footnote }), view.footnote);
+      }
       if (life.current !== born) return;
-      const line = `${step.title}. ${step.text}`;
-      setTyping(true);
-      await pause(400);
-      if (life.current !== born) return;
+      setHeader(ONLINE);
       setTyping(false);
-      push(stamp("estela", { text: line }), line);
-      await pause(180);
+    } catch {
+      if (life.current === born) commit();
+    } finally {
+      disarmWatchdog();
     }
-    if (view.footnote) {
-      if (life.current !== born) return;
-      push(stamp("estela", { text: view.footnote }), view.footnote);
-    }
-    if (life.current !== born) return;
-    setHeader(ONLINE);
-    setTyping(false);
-    setPhase("chat");
   }
 
   async function sendEmail(event: React.SubmitEvent<HTMLFormElement>) {
@@ -357,23 +381,23 @@ export default function BreachCheck() {
     }
   }
 
-  async function showAll() {
-    const born = life.current;
-    const pending = hidden;
+  function showAll() {
+    const pending = hidden.flatMap((card) => {
+      const usable = usableCard(card);
+      return usable ? [usable] : [];
+    });
+    pinScroll.current = threadRef.current?.scrollHeight ?? null;
     setHidden([]);
-    setPhase("intro");
-    for (const card of pending) {
-      if (life.current !== born) return;
-      setTyping(true);
-      setHeader(TYPING);
-      await pause(420);
-      if (life.current !== born) return;
-      setTyping(false);
-      setHeader(ONLINE);
-      push(stamp("estela", { card }), `${card.title}. ${card.happened ?? ""}`);
-      await pause(160);
+    if (pending.length === 0) {
+      setPhase("chat");
+      return;
     }
-    if (life.current !== born) return;
+    const additions = pending.map((card) => stamp("estela", { card }));
+    setMessages((current) => [...current, ...additions]);
+    const first = pending[0];
+    setLive(`${first.title}. ${first.happened ?? ""}`);
+    setTyping(false);
+    setHeader(ONLINE);
     setPhase("chat");
   }
 
@@ -395,6 +419,7 @@ export default function BreachCheck() {
   function restart() {
     life.current += 1;
     busy.current = false;
+    disarmWatchdog();
     abortRef.current?.abort();
     seq.current = 0;
     setMessages([greeting()]);
@@ -469,7 +494,7 @@ export default function BreachCheck() {
           {messages.map((message) => (
             <li key={message.id} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
               {message.card ? (
-                <BreachPreview card={message.card} at={message.at} />
+                <CardBoundary card={message.card} at={message.at} />
               ) : (
                 <Bubble message={message} />
               )}
@@ -571,39 +596,81 @@ function Bubble({ message }: { message: ChatMessage }) {
   );
 }
 
+function chipList(card: GuidedBreach): string[] {
+  const leaked = Array.isArray(card.leaked)
+    ? card.leaked.filter((item) => typeof item === "string" && item.trim() !== "")
+    : [];
+  return leaked.length > 0 ? leaked.slice(0, 12) : ["No se detalla qué datos concretos se filtraron"];
+}
+
+class CardBoundary extends Component<{ card: GuidedBreach; at: string }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) {
+      const title =
+        typeof this.props.card?.title === "string" && this.props.card.title
+          ? this.props.card.title
+          : "Esta filtración";
+      return (
+        <Bubble
+          message={{
+            id: "card-fallback",
+            role: "estela",
+            at: this.props.at,
+            text: `${title}. La ficha no se ha podido abrir, y seguimos con el resto.`,
+          }}
+        />
+      );
+    }
+    return <BreachPreview card={this.props.card} at={this.props.at} />;
+  }
+}
+
 function BreachPreview({ card, at }: { card: GuidedBreach; at: string }) {
-  const sources = card.sources ?? [];
+  const sources = (card.sources ?? []).filter(
+    (source) => source && typeof source.id === "string" && typeof source.label === "string",
+  );
+  const chips = chipList(card);
+  const date = typeof card.date === "string" && card.date ? card.date : "Fecha no indicada";
+  const domain = typeof card.domain === "string" ? card.domain : "";
   return (
     <article className="enter w-full max-w-[95%] overflow-hidden rounded-2xl rounded-bl-md border border-ink/10 bg-white shadow-[0_8px_24px_rgba(30,27,75,0.05)] motion-safe:animate-rise">
       <div className="border-b border-gold/30 bg-gold/10 px-3.5 py-2.5">
-        <p className="font-serif text-lg font-semibold leading-tight">{card.title}</p>
+        <p className="font-serif text-lg font-semibold leading-tight">
+          {typeof card.title === "string" && card.title ? card.title : "Filtración"}
+        </p>
         <p className="mt-0.5 text-xs text-ink/60">
-          {card.date}
-          {card.domain ? ` · ${card.domain}` : ""}
+          {date}
+          {domain ? ` · ${domain}` : ""}
         </p>
       </div>
       <div className="space-y-2.5 px-3.5 py-3 text-sm text-ink/85">
-        {card.happened && <p>{card.happened}</p>}
+        {typeof card.happened === "string" && card.happened && <p>{card.happened}</p>}
         <ul className="flex flex-wrap gap-1.5">
-          {card.leaked.map((item) => (
-            <li key={item} className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs text-ink/80">
+          {chips.map((item, index) => (
+            <li key={`${index}-${item}`} className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs text-ink/80">
               {item}
             </li>
           ))}
         </ul>
-        {card.means && (
+        {typeof card.means === "string" && card.means && (
           <p>
             <span className="font-medium text-ink">Qué significa. </span>
             {card.means}
           </p>
         )}
-        {card.todo && (
+        {typeof card.todo === "string" && card.todo && (
           <p>
             <span className="font-medium text-ink">Qué haría yo. </span>
             {card.todo}
           </p>
         )}
-        {card.note && <p className="text-ink/60">{card.note}</p>}
+        {typeof card.note === "string" && card.note && <p className="text-ink/60">{card.note}</p>}
         {sources.length > 0 && (
           <p className="text-xs text-ink/55">
             {sources.length > 1 ? "Fuentes" : "Fuente"}:{" "}

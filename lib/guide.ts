@@ -113,17 +113,29 @@ function todo(card: BreachCard): string {
   return "Revisaría ese servicio si aún lo uso, activaría la verificación en dos pasos si la ofrece y desconfiaría de mensajes que citen su nombre.";
 }
 
+// A partir de aquí el número deja de abrir la conversación: «he encontrado 257»
+// suena a alarma, y nadie va a leerlas todas en el hilo.
+const MANY = 20;
+
 function foundSpeech(count: number): string {
+  if (count >= MANY) {
+    return "Vamos a verlo juntos. Hay bastantes, y es más habitual de lo que parece. No es culpa tuya: quien perdió los datos fue el servicio. Te enseño primero las que más importan.";
+  }
   const noun = count === 1 ? "una filtración" : `${count} filtraciones`;
   return `Vamos a verlo juntos. He encontrado ${noun}. No es culpa tuya: quien perdió los datos fue el servicio. Te cuento qué pasó y qué haría yo.`;
 }
 
 function recount(count: number): { summary: string; detail: string } {
   const noun = count === 1 ? "1 filtración" : `${count} filtraciones`;
+  if (count >= MANY) {
+    return {
+      summary: `Este correo aparece en ${noun}.`,
+      detail: `Son ${count} en total. No hace falta mirarlas una a una: te dejo las primeras y el resto, por si quieres verlo.`,
+    };
+  }
   return {
     summary: `Este correo aparece en ${noun}.`,
-    detail:
-      "Cada tarjeta dice qué pasó, qué significa y de qué fuente viene.",
+    detail: "Cada tarjeta dice qué pasó, qué significa y de qué fuente viene.",
   };
 }
 

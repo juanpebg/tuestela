@@ -327,6 +327,25 @@ test("las filtraciones sensibles o retiradas no se enseñan", () => {
   assert.equal(view.breaches.length, 0);
 });
 
+test("muchas filtraciones no prometen recorrerlas todas", () => {
+  const list = Array.from({ length: 20 }, (_, index) =>
+    breach({
+      Name: `N${index}`,
+      Title: `Servicio ${index}`,
+      Domain: `s${index}.example`,
+      BreachDate: "2019-01-02",
+      PwnCount: 10,
+    }),
+  );
+  const view = presentBreaches(list);
+  assert.equal(view.breaches.length, 20);
+  assert.match(view.summary, /20 filtraciones/);
+  assert.match(view.detail, /Son 20 en total/);
+  assert.equal(view.detail.includes("por partes"), false);
+  const few = presentBreaches([breach(), breach({ Name: "Otra", Title: "Otra" })]);
+  assert.match(few.detail, /por partes/);
+});
+
 test("si no hay tipos de dato, se dice y se recomienda un paso", () => {
   const view = presentBreaches([breach({ DataClasses: [] })]);
   assert.deepEqual(JSON.parse(JSON.stringify(view.breaches[0].leaked)), [
