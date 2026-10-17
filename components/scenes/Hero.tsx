@@ -45,7 +45,7 @@ export default function Hero() {
             <span className="absolute left-1/2 top-1/2 h-[200%] w-[150%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(212,169,78,0.12),transparent_70%)]" />
 
             <span
-              className="relative block font-sans text-sm font-medium uppercase tracking-[0.4em] text-cream/70 motion-safe:animate-reveal md:text-lg"
+              className="enter relative block font-sans text-sm font-medium uppercase tracking-[0.4em] text-cream/70 motion-safe:animate-reveal md:text-lg"
               style={{ animationDelay: `${EYEBROW_DELAY}ms` }}
             >
               Descubre tu
@@ -54,7 +54,7 @@ export default function Hero() {
             <span className="relative mt-3 block font-serif text-5xl font-semibold leading-none tracking-tight md:mt-5 md:text-8xl lg:text-9xl">
               {/* La palabra vestida con el degradado de su propio trazo. */}
               <span
-                className="inline-block bg-gradient-to-r from-[#eacd8e] via-gold to-violet-light bg-clip-text text-transparent motion-safe:animate-bloom"
+                className="enter inline-block bg-gradient-to-r from-[#eacd8e] via-gold to-violet-light bg-clip-text text-transparent motion-safe:animate-bloom"
                 style={{ animationDelay: `${BLOOM_DELAY}ms` }}
               >
                 Estela
@@ -63,7 +63,7 @@ export default function Hero() {
                 {DIGITAL_LETTERS.map((letter, index) => (
                   <span
                     key={index}
-                    className="relative inline-block motion-safe:animate-reveal"
+                    className="enter relative inline-block motion-safe:animate-reveal"
                     style={{
                       animationDelay: `${DIGITAL_DELAY + index * DIGITAL_STEP}ms`,
                     }}
@@ -88,7 +88,7 @@ export default function Hero() {
 
         {/* Funcionales, no decorativos: fuera del bloque aria-hidden. */}
         <div
-          className="mt-12 flex flex-wrap items-center justify-center gap-4 motion-safe:animate-reveal md:mt-16"
+          className="enter mt-12 flex flex-wrap items-center justify-center gap-4 motion-safe:animate-reveal md:mt-16"
           style={{ animationDelay: `${CTA_DELAY}ms` }}
         >
           <a
@@ -122,7 +122,7 @@ export default function Hero() {
           que termine la coreografía. */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-6 flex justify-center motion-safe:animate-reveal"
+        className="enter absolute inset-x-0 bottom-6 flex justify-center motion-safe:animate-reveal"
         style={{ animationDelay: `${CUE_DELAY}ms` }}
       >
         <div className="flex flex-col items-center gap-2.5">

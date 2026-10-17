@@ -13,6 +13,7 @@ const FILES = [
   "../functions/api/check.ts",
   "../app/privacidad/page.tsx",
   "../components/Footer.tsx",
+  "../lib/safari-guard.ts",
 ];
 
 const BANNED = /\b(corto|cortos|breve|breves|rápido|rápida|rápidos|rápidas|rápidamente)\b/i;

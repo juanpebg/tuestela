@@ -60,7 +60,7 @@ export default function WaitlistForm() {
     return (
       <div
         role="status"
-        className="mt-8 flex flex-col items-center gap-3 motion-safe:animate-reveal"
+        className="enter mt-8 flex flex-col items-center gap-3 motion-safe:animate-reveal"
       >
         {/* Copy honesto: a quien repite alta no le reenviamos la bienvenida,
             así que no prometemos un correo que puede no llegar. */}

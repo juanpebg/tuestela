@@ -14,20 +14,18 @@
   --color-violet: #7c3aed; /* violeta: extremo final del degradado de la estela */
   --color-violet-light: #a78bfa; /* violeta claro: la estela sobre cielo nocturno */
 
-  /* Entrada de titulares: un fundido lento que "enfoca" el texto.
-     Es CSS puro a propósito: funciona aunque se navegue sin JavaScript, y
-     con `motion-safe:` se desactiva sola para quien pide movimiento reducido. */
+  /* Entrada de titulares: un fundido lento. Sin filter: en Safari iOS un
+     blur animado con fill-mode both puede dejar el texto en opacidad 0
+     para siempre (sobre todo al abrir la página desde otra app). */
   --animate-reveal: reveal 1s ease-out both;
 
   @keyframes reveal {
     from {
       opacity: 0;
-      filter: blur(8px);
       transform: translateY(8px);
     }
     to {
       opacity: 1;
-      filter: none;
       transform: none;
     }
   }
@@ -89,19 +87,17 @@
     }
   }
 
-  /* Nacimiento de "Estela" en el hero: llega grande, luminosa y desenfocada,
-     y cristaliza en su sitio. */
+  /* Nacimiento de "Estela" en el hero: llega grande y se asienta.
+     Sin filter, por el mismo fallo de Safari iOS que reveal. */
   --animate-bloom: bloom 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
 
   @keyframes bloom {
     from {
       opacity: 0;
-      filter: blur(14px) brightness(2.2);
       transform: scale(1.14);
     }
     to {
       opacity: 1;
-      filter: none;
       transform: none;
     }
   }

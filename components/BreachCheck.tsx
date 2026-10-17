@@ -540,8 +540,8 @@ function Bubble({ message }: { message: ChatMessage }) {
     <div
       className={
         mine
-          ? "max-w-[85%] rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-cream motion-safe:animate-rise"
-          : "max-w-[85%] rounded-2xl rounded-bl-md border border-ink/10 bg-white px-3.5 py-2 text-ink motion-safe:animate-rise"
+          ? "enter max-w-[85%] rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-cream motion-safe:animate-rise"
+          : "enter max-w-[85%] rounded-2xl rounded-bl-md border border-ink/10 bg-white px-3.5 py-2 text-ink motion-safe:animate-rise"
       }
     >
       <p className="text-pretty text-[0.95rem] leading-snug">
@@ -574,7 +574,7 @@ function Bubble({ message }: { message: ChatMessage }) {
 function BreachPreview({ card, at }: { card: GuidedBreach; at: string }) {
   const sources = card.sources ?? [];
   return (
-    <article className="w-full max-w-[95%] overflow-hidden rounded-2xl rounded-bl-md border border-ink/10 bg-white shadow-[0_8px_24px_rgba(30,27,75,0.05)] motion-safe:animate-rise">
+    <article className="enter w-full max-w-[95%] overflow-hidden rounded-2xl rounded-bl-md border border-ink/10 bg-white shadow-[0_8px_24px_rgba(30,27,75,0.05)] motion-safe:animate-rise">
       <div className="border-b border-gold/30 bg-gold/10 px-3.5 py-2.5">
         <p className="font-serif text-lg font-semibold leading-tight">{card.title}</p>
         <p className="mt-0.5 text-xs text-ink/60">
