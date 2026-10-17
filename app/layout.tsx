@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
+import { CRITICAL_CSS, FALLBACK_HTML, SAFARI_GUARD } from "@/lib/safari-guard";
 import "./globals.css";
 
 // next/font descarga las fuentes durante el build y las sirve desde nuestro
@@ -22,11 +23,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   title: "tuEstela — Descubre tu Estela digital",
   description:
-    "Ciberseguridad familiar sin tecnicismos, sin jerga y sin alarmas. Próximamente.",
+    "Comprueba si tu correo aparece en filtraciones conocidas. Ciberseguridad familiar, sin tecnicismos y sin alarmas.",
   openGraph: {
     title: "tuEstela — Descubre tu Estela digital",
     description:
-      "Ciberseguridad familiar sin tecnicismos, sin jerga y sin alarmas. Próximamente.",
+      "Comprueba si tu correo aparece en filtraciones conocidas. Ciberseguridad familiar, sin tecnicismos y sin alarmas.",
     siteName: "tuEstela",
     locale: "es_ES",
     type: "website",
@@ -47,12 +48,24 @@ export default function RootLayout({
       // scroll-smooth solo si el sistema no pide movimiento reducido.
       className={`${sourceSerif.variable} ${sourceSans.variable} motion-safe:scroll-smooth`}
     >
+      <head>
+        {/* Antes que los chunks: en iOS 15–16.3 un static block tira el
+            archivo entero, y este guion tiene que estar ya escuchando. */}
+        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
+        <script id="estela-guard" dangerouslySetInnerHTML={{ __html: SAFARI_GUARD }} />
+      </head>
       <body className="bg-cream text-ink font-sans antialiased">
-        {/* Red de seguridad: sin JavaScript, todo lo que anima con Motion
-            (.js-reveal, .js-draw) se muestra directamente en su estado final. */}
+        {/* Sin JavaScript, la entrada y Motion se ven en su estado final.
+            El respaldo solo aparece si el guion detecta un fallo. */}
         <noscript>
-          <style>{`.js-reveal { opacity: 1 !important; transform: none !important; filter: none !important; } .js-draw path { stroke-dasharray: none !important; opacity: 1 !important; }`}</style>
+          <style>{`.js-reveal, .enter { opacity: 1 !important; transform: none !important; filter: none !important; animation: none !important; } .js-draw path { stroke-dasharray: none !important; opacity: 1 !important; }`}</style>
         </noscript>
+        <div
+          id="estela-respaldo"
+          role="region"
+          aria-label="Comprobación de respaldo"
+          dangerouslySetInnerHTML={{ __html: FALLBACK_HTML }}
+        />
         {/* Capa de atmósfera (halos + grano), definida en globals.css. */}
         <div aria-hidden="true" className="backdrop" />
         {children}

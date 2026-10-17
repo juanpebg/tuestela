@@ -4,6 +4,7 @@ import { BrandSignature } from "@/components/Brand";
 // La despedida de la página: personaje y nombre firman; dos enlaces discretos
 // prueban lo que la web promete. Componente de servidor: cero JS.
 const LINKS = [
+  { href: "/privacidad", label: "Política de privacidad" },
   { href: REPO_URL, label: "Hecho en abierto — GitHub" },
   { href: `${REPO_URL}/tree/main/docs/decisions`, label: "Nuestras decisiones" },
 ];

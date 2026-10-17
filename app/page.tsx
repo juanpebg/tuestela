@@ -1,6 +1,7 @@
 import Hero from "@/components/scenes/Hero";
 import Manifesto from "@/components/scenes/Manifesto";
 import Ambition from "@/components/scenes/Ambition";
+import Comprobar from "@/components/scenes/Comprobar";
 import Waitlist from "@/components/scenes/Waitlist";
 import Footer from "@/components/Footer";
 
@@ -12,6 +13,7 @@ export default function Home() {
         <Hero />
         <Manifesto />
         <Ambition />
+        <Comprobar />
         <Waitlist />
       </main>
       <Footer />

@@ -33,6 +33,11 @@ entendemos lo suficiente como para tomarla.**
 | [0010](0010-identidad-tipografica-sin-repetir-logos.md) | Llevar el carácter del logo a la tipografía de la web | Sustituida por 0011 |
 | [0011](0011-tipografia-original-y-simbolo-en-iconos.md) | Recuperar la tipografía original y usar el símbolo en los iconos | Aceptada; favicon complementado por 0012 |
 | [0012](0012-favicon-transparente.md) | Favicon transparente | Aceptada |
+| [0013](0013-consulta-de-filtraciones-sin-guardar-el-correo.md) | Consultar filtraciones sin guardar el correo | Aceptada |
+| [0014](0014-resultados-con-estela-y-varias-fuentes.md) | Resultados con Estela y varias fuentes públicas | Aceptada |
+| [0015](0015-conversacion-con-estela.md) | La comprobación es una conversación con Estela | Aceptada |
+| [0016](0016-safari-ios-no-se-queda-en-blanco.md) | Safari en el iPhone no se queda con la página en blanco | Aceptada |
+| [0017](0017-muchas-filtraciones-no-paran-el-chat.md) | Muchas filtraciones no paran el chat | Aceptada |
 
 ¿Ves un fallo en alguna decisión? Ábrenos un issue. Que nos corrijan en público es
 parte del plan.

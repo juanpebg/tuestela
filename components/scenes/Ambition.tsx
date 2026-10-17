@@ -2,7 +2,6 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { STAR } from "@/components/Sparkle";
-import SearchDemo from "@/components/SearchDemo";
 
 // Interludio nocturno: la página vuelve a la noche para el sueño grande.
 // Frente al cielo salvaje del hero, aquí el cielo está cartografiado — una
@@ -82,8 +81,12 @@ export default function Ambition() {
         del planeta para que conozcas qué se sabe de ti en internet.
       </motion.p>
 
-      {/* El buscador, ilustrado: teclea, escanea y encuentra. */}
-      <SearchDemo />
+      <a
+        href="#comprobar"
+        className="relative mt-10 rounded-full border border-cream/25 px-6 py-3 text-sm font-medium text-cream/90 transition-colors hover:border-cream/50 hover:bg-cream/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#14113a]"
+      >
+        Comprueba tu correo
+      </a>
     </section>
   );
 }
